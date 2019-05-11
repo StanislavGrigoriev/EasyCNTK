@@ -1,0 +1,69 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using CNTK;
+
+namespace EasyCNTK.Layers
+{
+    /// <summary>
+    /// Реализует слой самостаблизации для выбора оптимальной скорости обучения. Источник: https://github.com/Microsoft/CNTK/blob/release/latest/Examples/TrainingCSharp/Common/LSTMSequenceClassifier.cs
+    /// </summary>
+    public sealed class SelfStabilization : Layer
+    {
+        private string _name;
+        private static Function selfStabilize(Function input, DeviceDescriptor device, string name)
+        {
+
+            bool isFloatType = input.Output.DataType == DataType.Float;
+            Constant f, fInv;
+            if (isFloatType)
+            {
+                f = Constant.Scalar(4.0f, device);
+                fInv = Constant.Scalar(f.DataType, 1.0 / 4.0f);
+            }
+            else
+            {
+                f = Constant.Scalar(4.0, device);
+                fInv = Constant.Scalar(f.DataType, 1.0 / 4.0);
+            }
+
+            var beta = CNTKLib.ElementTimes(
+                fInv,
+                CNTKLib.Log(
+                    Constant.Scalar(f.DataType, 1.0) +
+                    CNTKLib.Exp(CNTKLib.ElementTimes(f,
+                        new Parameter(new NDShape(), f.DataType, 0.99537863 /* 1/f*ln(e^f-1)*/, device, "alpha")))),
+                "beta");
+            return Function.Alias(CNTKLib.ElementTimes(beta, input), name);
+        }
+        /// <summary>
+        /// Создает слой самостабилизации для выбора оптимальной скорости обучения.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="device"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static Function Build(Function input, DeviceDescriptor device, string name)
+        {
+            return selfStabilize(input, device, name);
+        }
+        public override Function Create(Function input, DeviceDescriptor device)
+        {
+            return selfStabilize(input, device, _name);
+        }
+        /// <summary>
+        /// Создает слой самостабилизации для выбора оптимальной скорости обучения.
+        /// </summary>
+        /// <param name="name"></param>
+        public SelfStabilization(string name = "SelfStabilizer")
+        {
+            _name = name;
+        }
+        public override string GetDescription()
+        {
+            return "SS";
+        }
+    }
+}
