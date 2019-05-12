@@ -28,14 +28,7 @@ namespace EasyCNTK.Layers
         /// <returns></returns>
         private static Function createFullyConnectedLinearLayer(Variable input, int outputDim, ActivationFunction activationFunction, DeviceDescriptor device, string name)
         {
-            var dataType = input.DataType;
-            if (input.Shape.Rank != 1)
-            {
-                // если данные не одномерные разворачиваем входной тензор в вектор
-                int newDim = input.Shape.Dimensions.Aggregate((d1, d2) => d1 * d2);
-                input = CNTKLib.Reshape(input, new int[] { newDim });
-            }
-
+            var dataType = input.DataType;            
             var inputDim = input.Shape[0];
             var weight   = new Parameter(new int[] { outputDim, inputDim }, dataType, CNTKLib.GlorotUniformInitializer(
                 CNTKLib.DefaultParamInitScale,

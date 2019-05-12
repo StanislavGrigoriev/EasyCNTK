@@ -20,12 +20,7 @@ namespace EasyCNTK.Layers
         private static Function createResidualLayer2(Function input, int outputDimension, ActivationFunction activationFunction, DeviceDescriptor device, string name)
         {
             var dataType = input.Output.DataType;
-
-            if (input.Output.Shape.Rank != 1)
-            {
-                int newDim = input.Output.Shape.Dimensions.Aggregate((d1, d2) => d1 * d2);
-                input = CNTKLib.Reshape(input, new int[] { newDim });
-            }
+                          
             //проброс входа мимо 1 слоя    
             var forwarding = input;
             if (outputDimension != input.Output.Shape[0])
