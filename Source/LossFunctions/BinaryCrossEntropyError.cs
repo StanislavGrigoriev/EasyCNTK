@@ -9,7 +9,7 @@ namespace EasyCNTK.LossFunctions
 {
     public sealed class BinaryCrossEntropyError : Loss
     {
-        public override Function GetLoss(Variable prediction, Variable targets)
+        public override Function GetLoss(Variable prediction, Variable targets, DeviceDescriptor device)
         {
             return CNTKLib.BinaryCrossEntropy(prediction, targets);
         }

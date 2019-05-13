@@ -9,6 +9,6 @@ namespace EasyCNTK.LossFunctions
 {
     public abstract class Loss
     {
-        public abstract Function GetLoss(Variable prediction, Variable targets);
+        public abstract Function GetLoss(Variable prediction, Variable targets, DeviceDescriptor device);
     }
 }

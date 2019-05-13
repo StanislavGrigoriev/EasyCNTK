@@ -57,7 +57,7 @@ namespace EasyCNTK.Learning
             first = new List<T>(source.Take(firstCount));
             second = new List<T>(source.Skip(firstCount));
         }
-        
+
 
         #region Extensions for Function
         /// <summary>
@@ -90,8 +90,8 @@ namespace EasyCNTK.Learning
             var outputVariable = isReccurentModel ? Variable.InputVariable(source.Output.Shape, source.Output.DataType, "output", new List<Axis> { Axis.DefaultBatchAxis() })
                 : Variable.InputVariable(source.Output.Shape, source.Output.DataType, "output");
 
-            var loss = lossFunction.GetLoss(source, outputVariable);
-            var evaluation = evaluationFunction.GetLoss(source, outputVariable);
+            var loss = lossFunction.GetLoss(source, outputVariable, device);
+            var evaluation = evaluationFunction.GetLoss(source, outputVariable, device);
             var learner = optimizer.GetOptimizer(source.Parameters());
             var trainer = CNTKLib.CreateTrainer(
                 source,
@@ -99,10 +99,8 @@ namespace EasyCNTK.Learning
                 evaluation,
                 new LearnerVector() { learner });
             var learningRate = optimizer.LearningRate;
-            var averageLossError = -1.0;
-            var averageEvaluationError = -1.0;
             var losses = new double[epochCount];
-            var evals = new double[epochCount];            
+            var evals = new double[epochCount];
             Stopwatch sw = new Stopwatch();
             sw.Start();
             for (int i = 1; i <= epochCount; i++)
@@ -113,7 +111,7 @@ namespace EasyCNTK.Learning
                     trainer.TrainMinibatch(new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features }, { outputVariable, miniBatch.Labels } }, false, device);
                 }
                 losses[i - 1] = trainer.PreviousMinibatchLossAverage();
-                evals[i - 1] = trainer.PreviousMinibatchEvaluationAverage();                
+                evals[i - 1] = trainer.PreviousMinibatchEvaluationAverage();
 
                 actionPerEpoch?.Invoke(i, losses[i - 1], evals[i - 1], source);
 
@@ -130,14 +128,14 @@ namespace EasyCNTK.Learning
             sw.Stop();
             return new FitResult()
             {
-                LossError = averageLossError,
-                EvaluationError = averageEvaluationError,
+                LossError = losses[losses.Length - 1],
+                EvaluationError = evals[evals.Length - 1],
                 Duration = sw.Elapsed,
                 EpochCount = epochCount,
                 LossCurve = losses,
-                EvaluationCurve = evals                
+                EvaluationCurve = evals
             };
-        }       
+        }
 
         /// <summary>
         /// Обучает модель. Поддерживает реккурентные сети.

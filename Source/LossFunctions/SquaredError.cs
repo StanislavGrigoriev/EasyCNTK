@@ -9,7 +9,7 @@ namespace EasyCNTK.LossFunctions
 {
     public sealed class SquaredError : Loss
     {
-        public override Function GetLoss(Variable prediction, Variable targets)
+        public override Function GetLoss(Variable prediction, Variable targets, DeviceDescriptor device)
         {
             return CNTKLib.SquaredError(prediction, targets);
         }

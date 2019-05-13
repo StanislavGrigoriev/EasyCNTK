@@ -9,7 +9,7 @@ namespace EasyCNTK.LossFunctions
 {
     public sealed class AbsoluteError : Loss
     {
-        public override Function GetLoss(Variable prediction, Variable targets)
+        public override Function GetLoss(Variable prediction, Variable targets, DeviceDescriptor device)
         {
             var absolute = CNTKLib.Minus(prediction, targets);
             return CNTKLib.Abs(absolute);

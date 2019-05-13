@@ -19,7 +19,7 @@ namespace EasyCNTK.LossFunctions
         {
             _numberAxis = numberAxis;
         }
-        public override Function GetLoss(Variable prediction, Variable targets)
+        public override Function GetLoss(Variable prediction, Variable targets, DeviceDescriptor device)
         {
             if (_numberAxis == -1)
             {

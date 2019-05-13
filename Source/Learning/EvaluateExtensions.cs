@@ -83,12 +83,13 @@ namespace EasyCNTK.Learning
         }
         /// <summary>
         /// Вычисляет метрики для задач бинарной классификации. 
-        /// Подразумевается, что выход закодирован в One-Hot-Encoding(и обернут в Softmax, хотя возможно использовать <seealso cref="ActivationFunctions.Sigmoid"/>, <seealso cref="ActivationFunctions.HardSigmoid"/>), в ином случае метрика рассчитается некорректно.
+        /// Подразумевается, что выход имеет единичную размерность и метки классов закодированы в 1 для True наблюдений, в 0 для False.
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
-        /// <returns></returns>
-        public static BinaryClassificationMetrics GetBinaryClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source)
+        /// <param name="threshold">Пороговое значение для действительного значения выхода нейросети, ниже которого класс определяется как False. </param>
+        /// /// <returns></returns>
+        public static BinaryClassificationMetrics GetBinaryClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source, double threshold = 0.5)
         {
             int TP = 0; //факт 1, оценка 1
             int FP = 0; //факт 0, оценка 0
@@ -97,15 +98,15 @@ namespace EasyCNTK.Learning
 
             foreach (var item in source)
             {
-                bool isPositive = (dynamic)item.ExpectedValue[0] == 0;
-                var expected = item.ExpectedValue.IndexOf(item.ExpectedValue.Max());
-                var evaluated = item.EvaluatedValue.IndexOf(item.EvaluatedValue.Max());
+                var expected = (int)(dynamic)item.ExpectedValue[0];
+                var evaluated = (dynamic)item.EvaluatedValue[0] < threshold ? 0 : 1;
 
+                bool isPositive = expected == 1;
                 if (isPositive)
                 {
                     if (expected == evaluated)
                     {
-                        TP++; 
+                        TP++;
                     }
                     else
                     {
@@ -152,14 +153,14 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
-        public static ClassificationMetrics GetClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source) 
+        public static ClassificationMetrics GetClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source)
         {
             var firstElement = source.FirstOrDefault();
             if (firstElement.Equals(default(EvaluateItem<T>)))
             {
                 throw new ArgumentException("Последовательность IEnumerable<EvaluateItem<T>> не содержит элементов.", "source");
             }
-            
+
             var confusionMatrix = new double[firstElement.EvaluatedValue.Count, firstElement.EvaluatedValue.Count];
             int countAccurateSamples = 0;
             int countSamples = 0;
@@ -170,7 +171,7 @@ namespace EasyCNTK.Learning
 
                 confusionMatrix[expected, evaluated]++;
                 if (expected == evaluated) countAccurateSamples++;
-                
+
                 countSamples++;
             }
             for (int i = 0; i < firstElement.EvaluatedValue.Count; i++)
@@ -201,7 +202,7 @@ namespace EasyCNTK.Learning
             IEnumerable<Minibatch> testData,
             DeviceDescriptor device)
         {
-            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");            
+            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");
             foreach (var miniBatch in testData)
             {
                 var inputDataMap = new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features } };
@@ -332,7 +333,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device)
         {
             return source.Model.Evaluate<T>(testData, device);
-        } 
+        }
         #endregion
     }
 }
