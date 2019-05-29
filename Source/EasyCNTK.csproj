@@ -94,7 +94,6 @@
     <Compile Include="Learning\Optimizers\Adam.cs" />
     <Compile Include="Learning\Optimizers\Adamax.cs" />
     <Compile Include="Learning\Metrics\BinaryClassificationMetrics.cs" />
-    <Compile Include="Learning\Metrics\ClassificationMetrics.cs" />
     <Compile Include="Learning\EvaluateExtensions.cs" />
     <Compile Include="Learning\Optimizers\FSAdaGrad.cs" />
     <Compile Include="Learning\Optimizers\MomentumSGD.cs" />
@@ -110,7 +109,6 @@
     <Compile Include="LossFunctions\BinaryCrossEntropyError.cs" />
     <Compile Include="LossFunctions\ClassificationError.cs" />
     <Compile Include="LossFunctions\CrossEntropyWithSoftmaxError.cs" />
-    <Compile Include="LossFunctions\Errors.cs" />
     <Compile Include="LossFunctions\Loss.cs" />
     <Compile Include="LossFunctions\SquaredError.cs" />
     <Compile Include="LossFunctions\WeightedBinaryCrossEntropyError.cs" />

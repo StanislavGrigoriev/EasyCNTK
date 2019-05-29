@@ -22,6 +22,10 @@ namespace EasyCNTK.Learning
         public IList<T> EvaluatedValue { get; set; }
         public EvaluateItem(IList<T> expectedValue, IList<T> evaluatedValue)
         {
+            if (expectedValue.Count != evaluatedValue.Count)
+            {
+                throw new ArgumentException($"Несоответсвие размерности ожидаемых({expectedValue.Count}) и оцененных({evaluatedValue.Count}) значений.");
+            }
             ExpectedValue = expectedValue;
             EvaluatedValue = evaluatedValue;
         }

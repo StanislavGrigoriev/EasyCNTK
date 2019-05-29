@@ -22,10 +22,9 @@ namespace EasyCNTK.Learning
             var firstItem = source.FirstOrDefault();
             if (firstItem.Equals(default(EvaluateItem<T>)))
             {
-                return new List<RegressionMetrics>();
+                throw new ArgumentException("Последовательность IEnumerable<EvaluateItem<T>> не содержит элементов.", "source");
             }
-            if (firstItem.EvaluatedValue.Count != firstItem.ExpectedValue.Count) throw new ArgumentException($"Несоответсвие размерности ожидаемых({firstItem.ExpectedValue.Count}) и оцененных({firstItem.EvaluatedValue.Count}) значений.");
-
+            
             var result = firstItem.EvaluatedValue
                 .Select(p => new RegressionMetrics())
                 .ToArray();
@@ -88,6 +87,12 @@ namespace EasyCNTK.Learning
         /// /// <returns></returns>
         public static BinaryClassificationMetrics GetBinaryClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source, double threshold = 0.5)
         {
+            var firstItem = source.FirstOrDefault();
+            if (firstItem.Equals(default(EvaluateItem<T>)))
+            {
+                throw new ArgumentException("Последовательность IEnumerable<EvaluateItem<T>> не содержит элементов.", "source");
+            }
+
             int TP = 0; //факт 1, оценка 1
             int TN = 0; //факт 0, оценка 0
             int FP = 0; //факт 0, оценка 1

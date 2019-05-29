@@ -14,8 +14,8 @@ namespace EasyCNTK
     /// <summary>
     /// Реализует операции конструирования модели прямого распространения
     /// </summary>
-    /// <typeparam name="TElement">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
-    public sealed class Sequential<TElement>
+    /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+    public sealed class Sequential<T>
     {
         public const string PREFIX_FILENAME_DESCRIPTION = "ConfigurationDescription";        
         private DeviceDescriptor _device { get; }
@@ -58,7 +58,7 @@ namespace EasyCNTK
         public Sequential(DeviceDescriptor device, int[] inputShape, IList<Axis> inputDynamicAxes = null, bool isSparce = false)
         {
             _device = device;
-            var dataType = typeof(TElement) == typeof(double) ? DataType.Double : DataType.Float;
+            var dataType = typeof(T) == typeof(double) ? DataType.Double : DataType.Float;
             _model = Variable.InputVariable(inputShape, dataType, "Input", inputDynamicAxes, isSparce);
             var shape = "";
             inputShape.ToList().ForEach(p =>
@@ -73,7 +73,7 @@ namespace EasyCNTK
         {
             _device = device;
             _model = Function.Load(filePath, device, modelFormat);
-            var dataType = typeof(TElement) == typeof(double) ? DataType.Double : DataType.Float;
+            var dataType = typeof(T) == typeof(double) ? DataType.Double : DataType.Float;
             if (_model.Output.DataType != dataType)
             {
                 throw new ArgumentException($"Универсальный параметр TElement не сответствует типу данных в модели. Требуемый тип: {_model.Output.DataType}");
@@ -182,15 +182,7 @@ namespace EasyCNTK
             {
                 stream.WriteLine(getDescription());
             }
-        }
-        /// <summary>
-        /// Возвращает описание архитектуры сети
-        /// </summary>
-        /// <returns></returns>
-        public string GetDescription()
-        {
-            return getDescription();
-        }
+        }       
         public override string ToString()
         {
             return getDescription();
