@@ -25,15 +25,14 @@ namespace EasyCNTK.LossFunctions
         public override Function GetLoss(Variable prediction, Variable targets, DeviceDescriptor device)
         {
             Variable weights = null;
-            var uid = Guid.NewGuid().ToString();
             if (targets.DataType == DataType.Double)
             {
-                weights = new Variable(targets.Shape, VariableKind.Constant, targets.DataType, new NDArrayView(targets.Shape, _weights.ToArray(), device), false, null, false, "weights", uid);
+                weights = new Constant(new NDArrayView(targets.Shape, _weights.ToArray(), device));
             }
             if (targets.DataType == DataType.Float)
             {
-                weights = new Variable(targets.Shape, VariableKind.Constant, targets.DataType, new NDArrayView(targets.Shape, _weights.ToArray(), device), false, null, false, "weights", uid);
-            }            
+                weights = new Constant(new NDArrayView(targets.Shape, _weights.Select(p => (float)p).ToArray(), device));
+            }
 
             return CNTKLib.WeightedBinaryCrossEntropy(prediction, targets, weights);
         }
