@@ -1,13 +1,11 @@
-﻿using System;
+﻿
+
+using CNTK;
+using EasyCNTK.Layers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using CNTK;
-using EasyCNTK;
-using EasyCNTK.Layers;
 
 namespace EasyCNTK
 {
@@ -43,7 +41,7 @@ namespace EasyCNTK
         /// <param name="filePath">Путь к файлу модели</param>
         /// <param name="modelFormat">Формат модели</param>
         /// <returns></returns>
-        public static Sequential<T> LoadModel<T>(DeviceDescriptor device, string filePath, ModelFormat modelFormat = ModelFormat.CNTKv2)
+        public static Sequential<T> LoadModel(DeviceDescriptor device, string filePath, ModelFormat modelFormat = ModelFormat.CNTKv2)
         {
             return new Sequential<T>(device, filePath, modelFormat);
         }
