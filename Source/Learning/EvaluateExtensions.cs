@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EasyCNTK.Learning.Metrics;
+using System.Globalization;
 
 namespace EasyCNTK.Learning
 {
@@ -28,7 +29,7 @@ namespace EasyCNTK.Learning
             var result = firstItem.EvaluatedValue
                 .Select(p => new RegressionMetrics())
                 .ToArray();
-            var evaluateDataAcummulator = new T[result.Length];
+           
             var expectedDataAccumulator = new T[result.Length];
             int countItems = 0;
             foreach (var item in source)
@@ -42,8 +43,7 @@ namespace EasyCNTK.Learning
                     checked
                     {
                         result[i].MAE += mae;
-                        result[i].RMSE += rmse;
-                        evaluateDataAcummulator[i] += evaluated;
+                        result[i].RMSE += rmse;                        
                         expectedDataAccumulator[i] += expected;
                     }
                 }
@@ -52,21 +52,17 @@ namespace EasyCNTK.Learning
             }
             for (int i = 0; i < result.Length; i++)
             {
-                evaluateDataAcummulator[i] = (dynamic)evaluateDataAcummulator[i] / countItems;
                 expectedDataAccumulator[i] = (dynamic)expectedDataAccumulator[i] / countItems;
             }
 
-            var evaluateVarianceAcummulator = new T[result.Length];
             var expectedVarianceAccumulator = new T[result.Length];
             foreach (var item in source)
             {
                 for (int i = 0; i < result.Length; i++)
                 {
-                    dynamic evaluated = item.EvaluatedValue[i];
                     dynamic expected = item.ExpectedValue[i];
                     checked
                     {
-                        evaluateVarianceAcummulator[i] += Math.Pow(evaluated - expected, 2);
                         expectedVarianceAccumulator[i] += Math.Pow(expected - expectedDataAccumulator[i], 2);
                     }
                 }
@@ -74,9 +70,10 @@ namespace EasyCNTK.Learning
 
             for (int i = 0; i < result.Length; i++)
             {
+                result[i].Determination = 1 - (result[i].RMSE / (dynamic)expectedVarianceAccumulator[i]);
                 result[i].MAE = result[i].MAE / countItems;
                 result[i].RMSE = Math.Sqrt(result[i].RMSE / countItems);
-                result[i].Determination = 1 - ((dynamic)evaluateVarianceAcummulator[i] / expectedVarianceAccumulator[i]);
+                
             }
 
             return result;
@@ -92,12 +89,12 @@ namespace EasyCNTK.Learning
         public static BinaryClassificationMetrics GetBinaryClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source, double threshold = 0.5)
         {
             int TP = 0; //факт 1, оценка 1
-            int FP = 0; //факт 0, оценка 0
+            int TN = 0; //факт 0, оценка 0
+            int FP = 0; //факт 0, оценка 1
             int FN = 0; //факт 1, оценка 0
-            int TN = 0; //факт 0, оценка 1
 
             foreach (var item in source)
-            {
+            {                
                 var expected = (int)(dynamic)item.ExpectedValue[0];
                 var evaluated = (dynamic)item.EvaluatedValue[0] < threshold ? 0 : 1;
 
@@ -106,7 +103,7 @@ namespace EasyCNTK.Learning
                 {
                     if (expected == evaluated)
                     {
-                        TP++;
+                        TP++; 
                     }
                     else
                     {
@@ -117,11 +114,11 @@ namespace EasyCNTK.Learning
                 {
                     if (expected == evaluated)
                     {
-                        FP++;
+                        TN++;
                     }
                     else
                     {
-                        TN++;
+                        FP++;
                     }
                 }
             }
@@ -147,21 +144,27 @@ namespace EasyCNTK.Learning
             };
         }
         /// <summary>
-        /// Вычисляет метрики для задач многоклассовой классификации. 
+        /// Вычисляет метрики для задач одноклассовой классификации. 
         /// Подразумевается, что выход закодирован в One-Hot-Encoding(и обернут в Softmax, хотя возможно использовать <seealso cref="ActivationFunctions.Sigmoid"/>, <seealso cref="ActivationFunctions.HardSigmoid"/>), в ином случае метрика рассчитается некорректно.
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
-        public static ClassificationMetrics GetClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source)
+        public static OneLabelClassificationMetrics GetOneLabelClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source) where T:IConvertible
         {
             var firstElement = source.FirstOrDefault();
             if (firstElement.Equals(default(EvaluateItem<T>)))
             {
                 throw new ArgumentException("Последовательность IEnumerable<EvaluateItem<T>> не содержит элементов.", "source");
             }
-
+            
             var confusionMatrix = new double[firstElement.EvaluatedValue.Count, firstElement.EvaluatedValue.Count];
+            var classesDistribution = Enumerable.Range(0, firstElement.EvaluatedValue.Count)
+                .Select(p => new ClassItem()
+                {
+                    Index = p
+                })
+                .ToList();
             int countAccurateSamples = 0;
             int countSamples = 0;
             foreach (var item in source)
@@ -169,21 +172,89 @@ namespace EasyCNTK.Learning
                 var expected = item.ExpectedValue.IndexOf(item.ExpectedValue.Max());
                 var evaluated = item.EvaluatedValue.IndexOf(item.EvaluatedValue.Max());
 
+                classesDistribution[expected].Fraction++;
                 confusionMatrix[expected, evaluated]++;
-                if (expected == evaluated) countAccurateSamples++;
-
+                if (expected == evaluated)
+                {
+                    countAccurateSamples++;
+                    classesDistribution[evaluated].Precision++;
+                }
                 countSamples++;
             }
             for (int i = 0; i < firstElement.EvaluatedValue.Count; i++)
+            {
+                classesDistribution[i].Precision /= classesDistribution[i].Fraction;
+                classesDistribution[i].Fraction /= countSamples;
                 for (int j = 0; j < firstElement.EvaluatedValue.Count; j++)
                 {
                     confusionMatrix[i, j] /= countSamples;
                 }
+            }
+                
             double accuracy = (double)countAccurateSamples / countSamples;
-            return new ClassificationMetrics()
+            return new OneLabelClassificationMetrics()
             {
                 Accuracy = accuracy,
-                ConfusionMatrix = confusionMatrix
+                ConfusionMatrix = confusionMatrix,
+                ClassesDistribution = classesDistribution
+            };
+        }
+        /// <summary>
+        /// Вычисляет метрики для задач многоклассовой классификации.
+        /// Подразумевается, что выход закодирован в One-Hot-Encoding(и обернут в <seealso cref="ActivationFunctions.Sigmoid"/>, <seealso cref="ActivationFunctions.HardSigmoid"/> и т.п.), в ином случае метрика рассчитается некорректно.
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="thershold">Пороговое значение для действительного значения выхода нейросети, ниже которого класс не распознается. Другими словами - это минимальная вероятность, которую должен выдать классификатор для конкретного класса, чтобы этот класс был учтен как распознанный.</param>
+        /// <returns></returns>
+        public static MultiLabelClassificationMetrics GetMultiLabelClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source, double thershold = 0.5) where T:IConvertible
+        {
+            var firstElement = source.FirstOrDefault();
+            if (firstElement.Equals(default(EvaluateItem<T>)))
+            {
+                throw new ArgumentException("Последовательность IEnumerable<EvaluateItem<T>> не содержит элементов.", "source");
+            }
+            
+            var classesDistribution = Enumerable.Range(0, firstElement.EvaluatedValue.Count)
+                .Select(p => new ClassItem()
+                {
+                    Index = p
+                })
+                .ToList();
+            int countAccurateLabels = 0;
+            int countLabels = 0;
+            foreach (var item in source)
+            {
+                var expected = item.ExpectedValue
+                    .Select((value, index) => value.ToDouble(CultureInfo.InvariantCulture) > thershold ? index : -1)
+                    .Where(p => p != -1)
+                    .ToList();
+                var evaluated = item.EvaluatedValue
+                    .Select((value, index) => value.ToDouble(CultureInfo.InvariantCulture) > thershold ? index : -1)
+                    .Where(p => p != -1)
+                    .ToList();
+
+                foreach (var target in expected)
+                {
+                    classesDistribution[target].Fraction++;
+                    if (evaluated.Contains(target))
+                    {
+                        classesDistribution[target].Precision++;
+                    }
+                    countLabels++;
+                }                 
+            }
+            classesDistribution.ForEach(p =>
+            {
+                p.Precision /= p.Fraction;
+                p.Fraction /= countLabels;
+            });
+
+            double accuracy = (double)countAccurateLabels / countLabels;
+            return new MultiLabelClassificationMetrics()
+            {
+                Accuracy = accuracy,                
+                ClassesDistribution = classesDistribution
             };
         }
 
@@ -202,7 +273,7 @@ namespace EasyCNTK.Learning
             IEnumerable<Minibatch> testData,
             DeviceDescriptor device)
         {
-            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");
+            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");            
             foreach (var miniBatch in testData)
             {
                 var inputDataMap = new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features } };
@@ -228,7 +299,7 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
-            IEnumerable<IList<T>> testData,
+            IEnumerable<T[]> testData,
             int inputDim,
             DeviceDescriptor device)
         {
@@ -298,7 +369,7 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
-            IEnumerable<IList<T>> testData,
+            IEnumerable<T[]> testData,
             int inputDim,
             DeviceDescriptor device)
         {
@@ -333,7 +404,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device)
         {
             return source.Model.Evaluate<T>(testData, device);
-        }
+        } 
         #endregion
     }
 }

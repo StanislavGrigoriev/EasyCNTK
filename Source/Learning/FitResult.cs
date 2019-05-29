@@ -30,10 +30,10 @@ namespace EasyCNTK.Learning
         /// <summary>
         /// Кривая ошибок функции потерь в процессе обучения
         /// </summary>
-        public double[] LossCurve { get; set; }
+        public List<double> LossCurve { get; set; }
         /// <summary>
         /// Кривая ошибок оценочной функции в процессе обучения
         /// </summary>
-        public double[] EvaluationCurve { get; set; }
+        public List<double> EvaluationCurve { get; set; }
     }
 }

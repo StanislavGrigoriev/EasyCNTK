@@ -82,7 +82,13 @@
     <Compile Include="Layers\Pooling2D.cs" />
     <Compile Include="Layers\Residual2.cs" />
     <Compile Include="Layers\SelfStabilization.cs" />
+    <Compile Include="Learning\DoubleComparer.cs" />
     <Compile Include="Learning\EvaluateItem.cs" />
+    <Compile Include="Learning\FeatureStatistic.cs" />
+    <Compile Include="Learning\HelperExtensions.cs" />
+    <Compile Include="Learning\Metrics\ClassItem.cs" />
+    <Compile Include="Learning\Metrics\MultiLabelClassificationMetrics.cs" />
+    <Compile Include="Learning\Metrics\OneLabelClassificationMetrics.cs" />
     <Compile Include="Learning\Optimizers\AdaDelta.cs" />
     <Compile Include="Learning\Optimizers\AdaGrad.cs" />
     <Compile Include="Learning\Optimizers\Adam.cs" />
@@ -98,7 +104,6 @@
     <Compile Include="Learning\LearnExtensions.cs" />
     <Compile Include="Learning\Optimizers\RMSProp.cs" />
     <Compile Include="Learning\Optimizers\SGD.cs" />
-    <Compile Include="Legacy\Model.cs" />
     <Compile Include="LossFunctions\AbsoluteError.cs" />
     <Compile Include="LossFunctions\BiasError.cs" />
     <Compile Include="LossFunctions\BinaryClassificationError.cs" />

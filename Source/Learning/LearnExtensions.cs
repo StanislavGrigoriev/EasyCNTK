@@ -13,52 +13,6 @@ namespace EasyCNTK.Learning
 {
     public static class LearnExtensions
     {
-        /// <summary>
-        /// Перемешивает данные в коллекции.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="seed">Начальное значение для генератора случайных чисел (<seealso cref="Random"/>), если 0 - используется генератор по умолчанию </param>
-        public static void Shuffle<T>(this IList<T> source, int seed = 0)
-        {
-            Random random = new Random(seed);
-            int countLeft = source.Count;
-            while (countLeft > 1)
-            {
-                countLeft--;
-                int indexNextItem = random.Next(countLeft + 1);
-                T temp = source[indexNextItem];
-                source[indexNextItem] = source[countLeft];
-                source[countLeft] = temp;
-            }
-        }
-        /// <summary>
-        /// Разбивает набор данных на 2 части в заданном соотношении
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source">Исходный набор данных</param>
-        /// <param name="percent">Размер первого набора данных в процентах от исходной коллекции. Должен быть в диапазоне [0;1].</param>
-        /// <param name="first">Первый набор данных</param>
-        /// <param name="second">Второй набор данных</param>
-        /// <param name="randomizeSplit">Случайное разбиение (данные для наборов берутся случайно из всей выборки)</param>        
-        /// <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
-        public static void Split<T>(this IList<T> source, double percent, out IList<T> first, out IList<T> second, bool randomizeSplit = false, int seed = 0)
-        {
-            if (percent > 1 || percent < 0)
-            {
-                throw new ArgumentException("Percent must be in range [0;1]", "percent");
-            }
-            int firstCount = (int)(source.Count * percent);            
-
-            if (randomizeSplit)
-            {
-                source.Shuffle(seed);
-            }
-            first = new List<T>(source.Take(firstCount));
-            second = new List<T>(source.Skip(firstCount));
-        }
-
-
         #region Extensions for Function
         /// <summary>
         /// Обучает модель. Поддерживает реккурентные сети.
@@ -72,7 +26,8 @@ namespace EasyCNTK.Learning
         /// <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
         /// <param name="device">Устройство для обучения</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit(this Function source,
@@ -84,7 +39,7 @@ namespace EasyCNTK.Learning
            bool isReccurentModel,
            DeviceDescriptor device,
            Func<int, double, double> ruleUpdateLearningRate = null,
-           Action<int, double, double, Function> actionPerEpoch = null)
+           Func<int, double, double, bool> actionPerEpoch = null)
         {
             var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");
             var outputVariable = isReccurentModel ? Variable.InputVariable(source.Output.Shape, source.Output.DataType, "output", new List<Axis> { Axis.DefaultBatchAxis() })
@@ -98,9 +53,9 @@ namespace EasyCNTK.Learning
                 loss,
                 evaluation,
                 new LearnerVector() { learner });
-            var learningRate = optimizer.LearningRate;
-            var losses = new double[epochCount];
-            var evals = new double[epochCount];
+            var learningRate = optimizer.LearningRate;          
+            var losses = new List<double>(epochCount);
+            var evals = new List<double>(epochCount);            
             Stopwatch sw = new Stopwatch();
             sw.Start();
             for (int i = 1; i <= epochCount; i++)
@@ -110,10 +65,15 @@ namespace EasyCNTK.Learning
                 {
                     trainer.TrainMinibatch(new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features }, { outputVariable, miniBatch.Labels } }, false, device);
                 }
-                losses[i - 1] = trainer.PreviousMinibatchLossAverage();
-                evals[i - 1] = trainer.PreviousMinibatchEvaluationAverage();
+                losses.Add(trainer.PreviousMinibatchLossAverage());
+                evals.Add(trainer.PreviousMinibatchEvaluationAverage());
 
-                actionPerEpoch?.Invoke(i, losses[i - 1], evals[i - 1], source);
+                bool needStopTraining = actionPerEpoch?.Invoke(i, losses[i - 1], evals[i - 1]) ?? false;
+                if (needStopTraining)
+                {
+                    epochCount = i;
+                    break;
+                }                                   
 
                 if (ruleUpdateLearningRate != null)
                 {
@@ -126,14 +86,15 @@ namespace EasyCNTK.Learning
                 }
             }
             sw.Stop();
+            
             return new FitResult()
             {
-                LossError = losses[losses.Length - 1],
-                EvaluationError = evals[evals.Length - 1],
+                LossError = losses[losses.Count - 1],
+                EvaluationError = evals[evals.Count - 1],
                 Duration = sw.Elapsed,
                 EpochCount = epochCount,
                 LossCurve = losses,
-                EvaluationCurve = evals
+                EvaluationCurve = evals                
             };
         }
 
@@ -149,7 +110,8 @@ namespace EasyCNTK.Learning
         /// <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
         /// <param name="device">Устройство для обучения</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit(this Function source,
@@ -161,7 +123,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool isReccurentModel = false,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Fit(p => trainData, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -181,11 +143,12 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для обучения</param>
         /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Function source,
-            IList<IList<T>> trainData,
+            IList<T[]> trainData,
             int inputDim,
             int minibatchSize,
             Loss lossFunction,
@@ -195,7 +158,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             ValueConverter valueConverter = new ValueConverter();
             IList<Minibatch> minibatches = null;
@@ -229,7 +192,8 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для обучения</param>
         /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Function source,
@@ -243,7 +207,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             if (features.Count != labels.Count) throw new ArgumentException("Количество поледовательностей(features) и меток(labels) должно быть одинаковым.");
 
@@ -280,7 +244,8 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для обучения</param>
         /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Function source,
@@ -293,7 +258,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             ValueConverter valueConverter = new ValueConverter();
             IList<Minibatch> minibatches = null;
@@ -327,11 +292,12 @@ namespace EasyCNTK.Learning
         /// <param name="epochCount">Количество эпох обучения</param>        
         /// <param name="device">Устройство для обучения</param>       
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Function source,
-            IEnumerable<IList<T>> trainData,
+            IEnumerable<T[]> trainData,
             int inputDim,
             int minibatchSize,
             Loss lossFunction,
@@ -340,7 +306,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             ValueConverter valueConverter = new ValueConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize, device);
@@ -360,7 +326,8 @@ namespace EasyCNTK.Learning
         /// <param name="epochCount">Количество эпох обучения</param>        
         /// <param name="device">Устройство для обучения</param>     
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Function source,
@@ -373,7 +340,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             ValueConverter valueConverter = new ValueConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize, device);
@@ -392,7 +359,8 @@ namespace EasyCNTK.Learning
         /// <param name="epochCount">Количество эпох обучения</param>        
         /// <param name="device">Устройство для обучения</param>  
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Function source,
@@ -404,7 +372,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             ValueConverter valueConverter = new ValueConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, minibatchSize, device);
@@ -425,7 +393,8 @@ namespace EasyCNTK.Learning
         /// <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
         /// <param name="device">Устройство для обучения</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
@@ -437,7 +406,7 @@ namespace EasyCNTK.Learning
            bool isReccurentModel,
            DeviceDescriptor device,
            Func<int, double, double> ruleUpdateLearningRate = null,
-           Action<int, double, double, Function> actionPerEpoch = null)
+           Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(trainDataSelector, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -453,7 +422,8 @@ namespace EasyCNTK.Learning
         /// <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
         /// <param name="device">Устройство для обучения</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
@@ -465,7 +435,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool isReccurentModel = false,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(p => trainData, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -485,11 +455,12 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для обучения</param>
         /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
-            IList<IList<T>> trainData,
+            IList<T[]> trainData,
             int inputDim,
             int minibatchSize,
             Loss lossFunction,
@@ -499,7 +470,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(trainData, inputDim, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -518,7 +489,8 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для обучения</param>
         /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
@@ -532,7 +504,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(features, labels, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, shuffleSampleInMinibatchesPerEpoch, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -550,7 +522,8 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для обучения</param>  
         /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
@@ -563,7 +536,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -582,11 +555,12 @@ namespace EasyCNTK.Learning
         /// <param name="epochCount">Количество эпох обучения</param>        
         /// <param name="device">Устройство для обучения</param>       
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
-            IEnumerable<IList<T>> trainData,
+            IEnumerable<T[]> trainData,
             int inputDim,
             int minibatchSize,
             Loss lossFunction,
@@ -595,7 +569,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(trainData, inputDim, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -613,7 +587,8 @@ namespace EasyCNTK.Learning
         /// <param name="epochCount">Количество эпох обучения</param>        
         /// <param name="device">Устройство для обучения</param>        
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
@@ -626,7 +601,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(features, labels, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -643,7 +618,8 @@ namespace EasyCNTK.Learning
         /// <param name="epochCount">Количество эпох обучения</param>        
         /// <param name="device">Устройство для обучения</param>          
         /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
-        /// <param name="actionPerEpoch">Произвольное действие которое требуется выполнять каждую эпоху. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка, текущее состояние модели. 
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
@@ -655,7 +631,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Action<int, double, double, Function> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         } 
