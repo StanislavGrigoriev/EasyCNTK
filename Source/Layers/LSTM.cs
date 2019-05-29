@@ -1,8 +1,14 @@
-﻿using System;
+﻿//
+// Copyright (c) Stanislav Grigoriev. All rights reserved.
+// grigorievstas9@gmail.com 
+// https://github.com/StanislavGrigoriev/EasyCNTK
+//
+// Copyright (c) Microsoft. All rights reserved.
+//
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CNTK;
 
 namespace EasyCNTK.Layers
@@ -28,7 +34,8 @@ namespace EasyCNTK.Layers
         /// </summary>
         /// <param name="input">Вход в ЛСТМ (Х на шаге t)</param>
         /// <param name="prevOutput">Предыдущее состояние выхода ЛСТМ (h на шаге t-1)</param>
-        /// <param name="prevCellState">Предыдущее состояние ячейки ЛСТМ (с на шаге t-1)</param>        
+        /// <param name="prevCellState">Предыдущее состояние ячейки ЛСТМ (с на шаге t-1)</param> 
+        /// <param name="useShortcutConnections">Указывает, следует ли создавать ShortcutConnections для этой ячейки</param>
         /// <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию. Если не null -  будет применена самостабилизация к входам prevOutput и prevCellState </param>
         /// <param name="device">Устройтсво для расчетов</param>
         /// <returns>Функция (prev_h, prev_c, input) -> (h, c) которая реализует один шаг повторения ЛСТМ слоя</returns>

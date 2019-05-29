@@ -1,8 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//
+// Copyright (c) Stanislav Grigoriev. All rights reserved.
+// grigorievstas9@gmail.com 
+// https://github.com/StanislavGrigoriev/EasyCNTK
+//
+// Copyright (c) Microsoft. All rights reserved.
+//
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//
 using CNTK;
 using EasyCNTK.ActivationFunctions;
 
@@ -41,8 +45,7 @@ namespace EasyCNTK.Layers
         }
         /// <summary>
         /// Создает остаточный слой с 2 внутренними слоями
-        /// </summary>
-        /// <typeparam name="TElement">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// </summary>        
         /// <param name="input">Вход</param>
         /// <param name="outputDimension">Разрядность выходного слоя</param>
         /// <param name="activationFunction">Функция активации, null если не требуется</param>

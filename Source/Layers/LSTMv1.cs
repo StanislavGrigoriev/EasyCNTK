@@ -1,8 +1,14 @@
-﻿using System;
+﻿//
+// Copyright (c) Stanislav Grigoriev. All rights reserved.
+// grigorievstas9@gmail.com 
+// https://github.com/StanislavGrigoriev/EasyCNTK
+//
+// Copyright (c) Microsoft. All rights reserved.
+//
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CNTK;
 
 namespace EasyCNTK.Layers
@@ -29,8 +35,8 @@ namespace EasyCNTK.Layers
         /// <param name="input">Вход в ЛСТМ (Х на шаге t)</param>
         /// <param name="prevOutput">Предыдущее состояние выхода ЛСТМ (h на шаге t-1)</param>
         /// <param name="prevCellState">Предыдущее состояние ячейки ЛСТМ (с на шаге t-1)</param>
-        /// <param name="useSelfStabilization">Указывает, будет ли применена самостабилизация к входам prevOutput и prevCellState</param>
-        /// <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию</param>
+        /// <param name="useShortcutConnections">Указывает, следует ли создавать ShortcutConnections для этой ячейки</param>
+        /// <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию к входам prevOutput и prevCellState</param>
         /// <param name="device">Устройтсво для расчетов</param>
         /// <returns></returns>
         private static Tuple<Function, Function> LSTMCell(Variable input, Variable prevOutput,
@@ -158,12 +164,12 @@ namespace EasyCNTK.Layers
         /// <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию</param>
         /// <param name="isLastLstm">Указывает, будет ли это последний из слоев LSTM (следующие слои в сети нерекуррентные). Для того чтобы стыковать LSTM слои друг за другом, у всех слоев, кроме последнего, нужно установить false</param>
         /// <param name="name"></param>
-        public LSTMv1(int lstmOutputDim, int lstmCellDim = 0, bool useShortcutConnections = true, bool isLastlstm = true, Layer selfStabilizerLayer = null, string name = "LSTMv1")
+        public LSTMv1(int lstmOutputDim, int lstmCellDim = 0, bool useShortcutConnections = true, bool isLastLstm = true, Layer selfStabilizerLayer = null, string name = "LSTMv1")
         {
             _lstmOutputDim = lstmOutputDim;
             _lstmCellDim = lstmCellDim == 0 ? _lstmOutputDim : _lstmCellDim; ;
             _useShortcutConnections = useShortcutConnections;
-            _isLastLstmLayer = isLastlstm;
+            _isLastLstmLayer = isLastLstm;
             _selfStabilizerLayer = selfStabilizerLayer;
             _name = name;
         }

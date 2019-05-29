@@ -1,4 +1,12 @@
-﻿
+﻿//
+// Copyright (c) Stanislav Grigoriev. All rights reserved.
+// grigorievstas9@gmail.com 
+// https://github.com/StanislavGrigoriev/EasyCNTK
+//
+// Copyright (c) Microsoft. All rights reserved.
+//
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//
 
 using CNTK;
 using EasyCNTK.Layers;
@@ -35,8 +43,7 @@ namespace EasyCNTK
         }
         /// <summary>
         /// Загружает модель из файла. Так же пытается загрузить описание архитектуры сети из файла ConfigurationDescription_{имя_файла_модели}.txt, если это не удается, то описание конфигурации остается пустым.
-        /// </summary>
-        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// </summary>        
         /// <param name="device">Устройство для загрузки</param>
         /// <param name="filePath">Путь к файлу модели</param>
         /// <param name="modelFormat">Формат модели</param>

@@ -1,11 +1,18 @@
-﻿using CNTK;
+﻿//
+// Copyright (c) Stanislav Grigoriev. All rights reserved.
+// grigorievstas9@gmail.com 
+// https://github.com/StanislavGrigoriev/EasyCNTK
+//
+// Copyright (c) Microsoft. All rights reserved.
+//
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//
+using CNTK;
+using EasyCNTK.Learning.Metrics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EasyCNTK.Learning.Metrics;
 using System.Globalization;
+using System.Linq;
 
 namespace EasyCNTK.Learning
 {
