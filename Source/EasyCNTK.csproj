@@ -107,9 +107,9 @@
     <Compile Include="Learning\Optimizers\SGD.cs" />
     <Compile Include="LossFunctions\AbsoluteError.cs" />
     <Compile Include="LossFunctions\BiasError.cs" />
-    <Compile Include="LossFunctions\BinaryClassificationError.cs" />
-    <Compile Include="LossFunctions\BinaryCrossEntropyError.cs" />
     <Compile Include="LossFunctions\ClassificationError.cs" />
+    <Compile Include="LossFunctions\BinaryCrossEntropyError.cs" />
+    <Compile Include="LossFunctions\SoftmaxClassificationError.cs" />
     <Compile Include="LossFunctions\CrossEntropyWithSoftmaxError.cs" />
     <Compile Include="LossFunctions\Loss.cs" />
     <Compile Include="LossFunctions\SquaredError.cs" />

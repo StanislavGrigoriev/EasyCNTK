@@ -59,9 +59,9 @@ namespace EasyCNTK.Learning
                 loss,
                 evaluation,
                 new LearnerVector() { learner });
-            var learningRate = optimizer.LearningRate;          
+            var learningRate = optimizer.LearningRate;
             var losses = new List<double>(epochCount);
-            var evals = new List<double>(epochCount);            
+            var evals = new List<double>(epochCount);
             Stopwatch sw = new Stopwatch();
             sw.Start();
             for (int i = 1; i <= epochCount; i++)
@@ -79,7 +79,7 @@ namespace EasyCNTK.Learning
                 {
                     epochCount = i;
                     break;
-                }                                   
+                }
 
                 if (ruleUpdateLearningRate != null)
                 {
@@ -92,7 +92,7 @@ namespace EasyCNTK.Learning
                 }
             }
             sw.Stop();
-            
+
             return new FitResult()
             {
                 LossError = losses[losses.Count - 1],
@@ -100,7 +100,7 @@ namespace EasyCNTK.Learning
                 Duration = sw.Elapsed,
                 EpochCount = epochCount,
                 LossCurve = losses,
-                EvaluationCurve = evals                
+                EvaluationCurve = evals
             };
         }
 
@@ -478,7 +478,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null)
         {
-            return source.Model.Fit(trainData, inputDim, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(trainData, inputDim, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, shuffleSampleInMinibatchesPerEpoch, ruleUpdateLearningRate, actionPerEpoch);
         }
         /// <summary>
         /// Обучает реккурентную модель.
@@ -544,7 +544,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null)
         {
-            return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, shuffleSampleInMinibatchesPerEpoch, ruleUpdateLearningRate, actionPerEpoch);
         }
         /// <summary>
         /// Обучает модель. Не применим для обучения реккуретных сетей.
@@ -640,9 +640,9 @@ namespace EasyCNTK.Learning
             Func<int, double, double, bool> actionPerEpoch = null)
         {
             return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
-        } 
+        }
         #endregion
 
-    }    
+    }
 }
 

@@ -23,27 +23,30 @@ namespace EasyCNTK
     /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
     public sealed class Sequential<T>
     {
-        public const string PREFIX_FILENAME_DESCRIPTION = "ConfigurationDescription";        
+        public const string PREFIX_FILENAME_DESCRIPTION = "ArchitectureDescription";
         private DeviceDescriptor _device { get; }
         private Function _model { get; set; }
-        private string _configurationDescription { get; set; }
-        private Dictionary<string, Function> _shortcutConnectionInputs = new Dictionary<string, Function>();   
-     
-        private string getDescription()
+        private string _architectureDescription { get; set; }
+        private Dictionary<string, Function> _shortcutConnectionInputs = new Dictionary<string, Function>();
+
+        private string getArchitectureDescription()
         {
             var shortcuts = _shortcutConnectionInputs.Keys.ToList();
             foreach (var shortcut in shortcuts)
             {
-                if (!_configurationDescription.Contains($"ShortOut({shortcut})"))
+                if (!_architectureDescription.Contains($"ShortOut({shortcut})"))
                 {
-                    _configurationDescription = _configurationDescription.Replace($"-ShortIn({shortcut})", "");
+                    _architectureDescription = _architectureDescription.Replace($"-ShortIn({shortcut})", "");
                 }
             }
-            return _configurationDescription;
+            return _architectureDescription + "[OUT]";
         }
         /// <summary>
-        /// Загружает модель из файла. Так же пытается загрузить описание архитектуры сети из файла ConfigurationDescription_{имя_файла_модели}.txt, если это не удается, то описание конфигурации остается пустым.
-        /// </summary>        
+        /// Загружает модель из файла. Так же пытается прочитать описание архитектуры сети: 
+        /// 1) Из файла ArchitectureDescription{имя_файла_модели}.txt 
+        /// 2) Из имени файла модели ориентируясь на наличение [IN] и [OUT] тегов. Если это не удается, то описание конфигурации: Unknown.
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="device">Устройство для загрузки</param>
         /// <param name="filePath">Путь к файлу модели</param>
         /// <param name="modelFormat">Формат модели</param>
@@ -71,10 +74,10 @@ namespace EasyCNTK
                 shape += p.ToString() + "x";
             });
             shape = shape.Substring(0, shape.Length - 1);
-            _configurationDescription = $"INPUT{shape}";
+            _architectureDescription = $"[IN]{shape}";
         }
 
-         private Sequential(DeviceDescriptor device, string filePath, ModelFormat modelFormat = ModelFormat.CNTKv2)
+        private Sequential(DeviceDescriptor device, string filePath, ModelFormat modelFormat = ModelFormat.CNTKv2)
         {
             _device = device;
             _model = Function.Load(filePath, device, modelFormat);
@@ -85,21 +88,30 @@ namespace EasyCNTK
             }
             try
             {
+                _architectureDescription = "Unknown";
+
                 var pathToFolder = Directory.GetParent(filePath).FullName;
                 var descriptionPath = Path.Combine(pathToFolder, $"{PREFIX_FILENAME_DESCRIPTION}_{filePath}.txt");
                 if (File.Exists(descriptionPath))
                 {
-                    _configurationDescription = File.ReadAllText(descriptionPath);
+                    var description = File.ReadAllText(descriptionPath);
+                    var index = description.IndexOf("[OUT]");
+                    _architectureDescription = index != -1 ? description.Remove(index) : description;
+                    return;
                 }
-                else
+
+                var fileName = Path.GetFileName(filePath);
+                var indexIn = fileName.IndexOf("[IN]");
+                var indexOut = fileName.IndexOf("[OUT]");
+                bool fileNameContainsArchitectureDescription = indexIn != -1 && indexOut != -1 && indexIn < indexOut;
+                if (fileNameContainsArchitectureDescription)
                 {
-                    _configurationDescription = "";
-                }                
+                    _architectureDescription = fileName.Substring(indexIn, indexOut - indexIn);
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Ошибка загрузки файла конфигурации модели. {ex.Message}");
-                _configurationDescription = "";
             }
         }
         /// <summary>
@@ -109,7 +121,7 @@ namespace EasyCNTK
         public void Add(Layer layer)
         {
             _model = layer.Create(_model, _device);
-            _configurationDescription += $"-{layer.GetDescription()}";
+            _architectureDescription += $"-{layer.GetDescription()}";
         }
         /// <summary>
         /// Создает входную точку для SC, из которой можно создать соединение к следующим слоям сети. Для одной входной точки должна существовать как минимум одна выходная точка, иначе соединение игнорируется в модели.
@@ -118,7 +130,7 @@ namespace EasyCNTK
         public void CreateInputPointForShortcutConnection(string nameShortcutConnection)
         {
             _shortcutConnectionInputs.Add(nameShortcutConnection, _model);
-            _configurationDescription += $"-ShortIn({nameShortcutConnection})";
+            _architectureDescription += $"-ShortIn({nameShortcutConnection})";
         }
         /// <summary>
         /// Создает выходную точку для SC, к которой пробрасывается соединение из ранее созданной входной точки. Для одной входной точки может существовать несколько выходных точек.
@@ -130,7 +142,7 @@ namespace EasyCNTK
             {
                 if (input.Output.Shape.Equals(_model.Output.Shape))
                 {
-                     _model = CNTKLib.Plus(_model, input);                    
+                    _model = CNTKLib.Plus(_model, input);
                 }
                 else if (input.Output.Shape.Rank != 1 && _model.Output.Shape.Rank == 1) // [3x4x2] => [5]
                 {
@@ -148,7 +160,7 @@ namespace EasyCNTK
                 {
                     int targetDim = _model.Output.Shape.Dimensions.Aggregate((d1, d2) => d1 * d2);
                     var inputDim = input.Output.Shape[0];
-                    var scale = new Parameter(new[] { targetDim, inputDim}, input.Output.DataType, CNTKLib.UniformInitializer(CNTKLib.DefaultParamInitScale), _device);
+                    var scale = new Parameter(new[] { targetDim, inputDim }, input.Output.DataType, CNTKLib.UniformInitializer(CNTKLib.DefaultParamInitScale), _device);
                     var scaled = CNTKLib.Times(scale, input);
 
                     var reshaped = CNTKLib.Reshape(scaled, _model.Output.Shape);
@@ -162,11 +174,11 @@ namespace EasyCNTK
                     var targetDim = _model.Output.Shape.Dimensions.Aggregate((d1, d2) => d1 * d2);
                     var scale = new Parameter(new[] { targetDim, inputDim }, input.Output.DataType, CNTKLib.UniformInitializer(CNTKLib.DefaultParamInitScale), _device);
                     var scaled = CNTKLib.Times(scale, inputVector);
-                    
+
                     var reshaped = CNTKLib.Reshape(scaled, _model.Output.Shape);
                     _model = CNTKLib.Plus(reshaped, _model);
                 }
-                _configurationDescription += $"-ShortOut({nameShortcutConnection})";
+                _architectureDescription += $"-ShortOut({nameShortcutConnection})";
             }
         }
         /// <summary>
@@ -174,23 +186,29 @@ namespace EasyCNTK
         /// </summary>
         public Function Model { get => _model; }
         /// <summary>
-        /// Сохраняет модель в файл. При сохранении дополнительно создается текстовый файл с описанием архитектуры сети: ConfigurationDescription_{имя_файла_модели}.txt
+        /// Сохраняет модель в файл.
         /// </summary>
         /// <param name="filePath">Путь для сохранения модели (включая имя файла и расширение)</param>
-        public void SaveModel(string filePath)
+        /// <param name="saveArchitectureDescription">Указывает, следует ли сохранить описание архитектуры в отдельном файле: ArchitectureDescription_{имя-файла-модели}.txt</param>
+        public void SaveModel(string filePath, bool saveArchitectureDescription = true)
         {
             _model.Save(filePath);
-            var fileName = Path.GetFileName(filePath);
-            var pathToFolder = Directory.GetParent(filePath).FullName;
-            var descriptionPath = Path.Combine(pathToFolder, $"{PREFIX_FILENAME_DESCRIPTION}_{fileName}.txt");
-            using (var stream = File.CreateText(descriptionPath))
+            if (saveArchitectureDescription)
             {
-                stream.WriteLine(getDescription());
+                var fileName = Path.GetFileName(filePath);
+                var pathToFolder = Directory.GetParent(filePath).FullName;
+                var descriptionPath = Path.Combine(pathToFolder, $"{PREFIX_FILENAME_DESCRIPTION}_{fileName}.txt");
+                using (var stream = File.CreateText(descriptionPath))
+                {
+                    stream.Write(getArchitectureDescription());
+                }
             }
-        }       
+        }
+
         public override string ToString()
         {
-            return getDescription();
+            return getArchitectureDescription();
         }
     }
 }
+
