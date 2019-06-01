@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+    <LangVersion>latest</LangVersion>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.2.0</Version>
+    <Authors>Stanislav Grigoriev</Authors>
+    <Company>Stanislav Grigoriev</Company>
+    <Description>C# library for DeepLerning. It is wrapper over C# CNTK API. Has implementantion of layers (LSTM, Convolution etc.), optimizers, losses etc. 
+Allows train and evaluate deep neural networks in style similar to Keras.</Description>
+    <Copyright>Stanislav Grigoriev (c)</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CNTK.GPU" Version="2.7.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+  </ItemGroup>
+
+</Project>
