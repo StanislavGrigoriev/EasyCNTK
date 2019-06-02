@@ -81,7 +81,7 @@ namespace MNISTClassifier
                 epochs,
                 device,
                 shuffleSampleInMinibatchesPerEpoch: false,
-                ruleUpdateLearningRate: (epoch, learningRate) => epoch % 100 == 0 ? 0.95 * learningRate : learningRate,
+                ruleUpdateLearningRate: (epoch, learningRate) => epoch % 10 == 0 ? 0.95 * learningRate : learningRate,
                 actionPerEpoch: (epoch, loss, eval) =>
                 {
                     Console.WriteLine($"Loss: {loss:F10} Eval: {eval:F3} Epoch: {epoch}");
