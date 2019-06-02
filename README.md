@@ -28,6 +28,8 @@ __4__. Основное использование на примере одно�
                 out var datasetTest,
                 randomizeSplit: true);
 
+            List<FeatureStatistic> statistic = dataset.ComputeStatisticForCollection(); //Статистика для каждого признака (среднее, мин, макс, дисперсия и т.п.) 
+
             var device = DeviceDescriptor.GPUDevice(0); //указали что хотим обучать на GPU
             int minibatchSize = 512;
             int inputDimension = 784;
