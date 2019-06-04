@@ -24,7 +24,7 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
-        public static IList<RegressionMetrics> GetRegressionMetrics<T>(this IEnumerable<EvaluateItem<T>> source)
+        public static IList<RegressionMetrics> GetRegressionMetrics<T>(this IEnumerable<EvaluateItem<T>> source) where T: IConvertible
         {
             var firstItem = source.FirstOrDefault();
             if (firstItem.Equals(default(EvaluateItem<T>)))
@@ -36,16 +36,16 @@ namespace EasyCNTK.Learning
                 .Select(p => new RegressionMetrics())
                 .ToArray();
            
-            var expectedDataAccumulator = new T[result.Length];
+            var expectedDataAccumulator = new double[result.Length];
             int countItems = 0;
             foreach (var item in source)
             {
                 for (int i = 0; i < result.Length; i++)
                 {
-                    dynamic evaluated = item.EvaluatedValue[i];
-                    dynamic expected = item.ExpectedValue[i];
-                    var mae = Math.Abs(evaluated - expected);
-                    var rmse = Math.Pow(evaluated - expected, 2);
+                    double evaluated = item.EvaluatedValue[i].ToDouble(CultureInfo.InvariantCulture);
+                    double expected  = item.ExpectedValue[i].ToDouble(CultureInfo.InvariantCulture);
+                    double mae       = Math.Abs(evaluated - expected);
+                    double rmse      = Math.Pow(evaluated - expected, 2);
                     checked
                     {
                         result[i].MAE += mae;
@@ -58,15 +58,15 @@ namespace EasyCNTK.Learning
             }
             for (int i = 0; i < result.Length; i++)
             {
-                expectedDataAccumulator[i] = (dynamic)expectedDataAccumulator[i] / countItems;
+                expectedDataAccumulator[i] = expectedDataAccumulator[i] / countItems;
             }
 
-            var expectedVarianceAccumulator = new T[result.Length];
+            var expectedVarianceAccumulator = new double[result.Length];
             foreach (var item in source)
             {
                 for (int i = 0; i < result.Length; i++)
                 {
-                    dynamic expected = item.ExpectedValue[i];
+                    double expected = item.ExpectedValue[i].ToDouble(CultureInfo.InvariantCulture);
                     checked
                     {
                         expectedVarianceAccumulator[i] += Math.Pow(expected - expectedDataAccumulator[i], 2);
@@ -76,7 +76,7 @@ namespace EasyCNTK.Learning
 
             for (int i = 0; i < result.Length; i++)
             {
-                result[i].Determination = 1 - (result[i].RMSE / (dynamic)expectedVarianceAccumulator[i]);
+                result[i].Determination = 1 - (result[i].RMSE / expectedVarianceAccumulator[i]);
                 result[i].MAE = result[i].MAE / countItems;
                 result[i].RMSE = Math.Sqrt(result[i].RMSE / countItems);
                 
@@ -92,7 +92,7 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="threshold">Пороговое значение для действительного значения выхода нейросети, ниже которого класс определяется как False. </param>
         /// /// <returns></returns>
-        public static BinaryClassificationMetrics GetBinaryClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source, double threshold = 0.5)
+        public static BinaryClassificationMetrics GetBinaryClassificationMetrics<T>(this IEnumerable<EvaluateItem<T>> source, double threshold = 0.5) where T: IConvertible
         {
             var firstItem = source.FirstOrDefault();
             if (firstItem.Equals(default(EvaluateItem<T>)))
@@ -107,8 +107,8 @@ namespace EasyCNTK.Learning
 
             foreach (var item in source)
             {                
-                var expected = (int)(dynamic)item.ExpectedValue[0];
-                var evaluated = (dynamic)item.EvaluatedValue[0] < threshold ? 0 : 1;
+                int expected = item.ExpectedValue[0].ToInt32(CultureInfo.InvariantCulture);
+                int evaluated = item.EvaluatedValue[0].ToDouble(CultureInfo.InvariantCulture) < threshold ? 0 : 1;
 
                 bool isPositive = expected == 1;
                 if (isPositive)
@@ -181,8 +181,8 @@ namespace EasyCNTK.Learning
             int countSamples = 0;
             foreach (var item in source)
             {
-                var expected = item.ExpectedValue.IndexOf(item.ExpectedValue.Max());
-                var evaluated = item.EvaluatedValue.IndexOf(item.EvaluatedValue.Max());
+                int expected = item.ExpectedValue.IndexOf(item.ExpectedValue.Max());
+                int evaluated = item.EvaluatedValue.IndexOf(item.EvaluatedValue.Max());
 
                 classesDistribution[expected].Fraction++;
                 confusionMatrix[expected, evaluated]++;
@@ -283,7 +283,7 @@ namespace EasyCNTK.Learning
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<Minibatch> testData,
-            DeviceDescriptor device)
+            DeviceDescriptor device) where T:IConvertible
         {
             var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");            
             foreach (var miniBatch in testData)
@@ -313,7 +313,7 @@ namespace EasyCNTK.Learning
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<T[]> testData,
             int inputDim,
-            DeviceDescriptor device)
+            DeviceDescriptor device) where T : IConvertible
         {
             ValueConverter valueConverter = new ValueConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(testData, inputDim, 1, device);
@@ -331,7 +331,7 @@ namespace EasyCNTK.Learning
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<IList<T[]>> features,
             IEnumerable<T[]> labels,
-            DeviceDescriptor device)
+            DeviceDescriptor device) where T : IConvertible
         {
             ValueConverter valueConverter = new ValueConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(features, labels, 1, device);
@@ -347,7 +347,7 @@ namespace EasyCNTK.Learning
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<Sample2D<T>> testData,
-            DeviceDescriptor device)
+            DeviceDescriptor device) where T : IConvertible
         {
             ValueConverter valueConverter = new ValueConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(testData, 1, device);
@@ -366,7 +366,7 @@ namespace EasyCNTK.Learning
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<Minibatch> testData,
-            DeviceDescriptor device)
+            DeviceDescriptor device) where T : IConvertible
         {
             return source.Model.Evaluate<T>(testData, device);
         }
@@ -383,7 +383,7 @@ namespace EasyCNTK.Learning
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<T[]> testData,
             int inputDim,
-            DeviceDescriptor device)
+            DeviceDescriptor device) where T : IConvertible
         {
             return source.Model.Evaluate<T>(testData, inputDim, device);
         }
@@ -399,7 +399,7 @@ namespace EasyCNTK.Learning
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<IList<T[]>> features,
             IEnumerable<T[]> labels,
-            DeviceDescriptor device)
+            DeviceDescriptor device) where T : IConvertible
         {
             return source.Model.Evaluate<T>(features, labels, device);
         }
@@ -413,7 +413,7 @@ namespace EasyCNTK.Learning
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<Sample2D<T>> testData,
-            DeviceDescriptor device)
+            DeviceDescriptor device) where T : IConvertible
         {
             return source.Model.Evaluate<T>(testData, device);
         } 

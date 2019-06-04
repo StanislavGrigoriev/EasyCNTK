@@ -9,6 +9,7 @@
 //
 
 using CNTK;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -52,7 +53,7 @@ namespace EasyCNTK
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
-        public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<IList<T[]>> features, IEnumerable<T[]> labels, int minibatchSize, DeviceDescriptor device)
+        public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<IList<T[]>> features, IEnumerable<T[]> labels, int minibatchSize, DeviceDescriptor device) where T:IConvertible
         {
             var inputDimension = features.FirstOrDefault()[0].Length;
             var outputDimension = labels.FirstOrDefault().Length;
@@ -83,7 +84,7 @@ namespace EasyCNTK
         /// <param name="inputDim">Размерность признаков (разрядность)</param>        
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
-        public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<IList<T>> dataset, int inputDim, int minibatchSize, DeviceDescriptor device)
+        public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<IList<T>> dataset, int inputDim, int minibatchSize, DeviceDescriptor device) where T : IConvertible
         {
             var outputDim = (dataset.FirstOrDefault()?.Count ?? 0) - inputDim;
             foreach (var minibatchData in GetSegments(dataset, minibatchSize))
@@ -107,7 +108,7 @@ namespace EasyCNTK
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
-        public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<Sample2D<T>> dataset, int minibatchSize, DeviceDescriptor device)
+        public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<Sample2D<T>> dataset, int minibatchSize, DeviceDescriptor device) where T : IConvertible
         {
             int currentMinibatchSize = 0;
             var features = new List<T>();
@@ -152,7 +153,7 @@ namespace EasyCNTK
     /// Представляет пример, признаки у которого представлены в 2Д (матрица)
     /// </summary>
     /// <typeparam name="T">Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
-    public class Sample2D<T>
+    public class Sample2D<T> where T : IConvertible
     {
         public T[,] Features { get; set; }
         public T[] Labels { get; set; }

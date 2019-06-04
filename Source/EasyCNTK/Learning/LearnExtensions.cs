@@ -164,7 +164,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             ValueConverter valueConverter = new ValueConverter();
             IList<Minibatch> minibatches = null;
@@ -213,7 +213,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             if (features.Count != labels.Count) throw new ArgumentException("Количество поледовательностей(features) и меток(labels) должно быть одинаковым.");
 
@@ -264,7 +264,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             ValueConverter valueConverter = new ValueConverter();
             IList<Minibatch> minibatches = null;
@@ -312,7 +312,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             ValueConverter valueConverter = new ValueConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize, device);
@@ -346,7 +346,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             ValueConverter valueConverter = new ValueConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize, device);
@@ -378,7 +378,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             ValueConverter valueConverter = new ValueConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, minibatchSize, device);
@@ -412,7 +412,7 @@ namespace EasyCNTK.Learning
            bool isReccurentModel,
            DeviceDescriptor device,
            Func<int, double, double> ruleUpdateLearningRate = null,
-           Func<int, double, double, bool> actionPerEpoch = null)
+           Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             return source.Model.Fit(trainDataSelector, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -441,7 +441,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool isReccurentModel = false,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             return source.Model.Fit(p => trainData, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -476,7 +476,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             return source.Model.Fit(trainData, inputDim, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, shuffleSampleInMinibatchesPerEpoch, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -510,7 +510,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             return source.Model.Fit(features, labels, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, shuffleSampleInMinibatchesPerEpoch, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -542,7 +542,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, shuffleSampleInMinibatchesPerEpoch, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -575,7 +575,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             return source.Model.Fit(trainData, inputDim, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -607,7 +607,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             return source.Model.Fit(features, labels, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -637,7 +637,7 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null)
+            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
             return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         }

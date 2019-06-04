@@ -14,7 +14,7 @@ namespace EasyCNTK.Learning
     /// Представляет реальные и вычисленные моделью значения выхода
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public struct EvaluateItem<T>
+    public struct EvaluateItem<T> where T:IConvertible
     {
         /// <summary>
         /// Реальные значения, ожидаемые на выходе

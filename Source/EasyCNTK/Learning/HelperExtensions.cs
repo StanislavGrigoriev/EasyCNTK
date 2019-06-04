@@ -7,6 +7,7 @@
 //
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace EasyCNTK.Learning
@@ -21,7 +22,7 @@ namespace EasyCNTK.Learning
         /// <param name="seed">Начальное значение для генератора случайных чисел (<seealso cref="Random"/>), если 0 - используется генератор по умолчанию </param>
         public static void Shuffle<T>(this IList<T> source, int seed = 0)
         {
-            Random random = new Random(seed);
+            Random random = seed== 0 ? new Random() : new Random(seed);
             int countLeft = source.Count;
             while (countLeft > 1)
             {
@@ -157,7 +158,7 @@ namespace EasyCNTK.Learning
                 countItems++;
                 for (int i = 0; i < item.Count; i++)
                 {
-                    dynamic value = item[i];
+                    double value = item[i].ToDouble(CultureInfo.InvariantCulture);
 
                     if (value < result[i].Min)
                     {
@@ -271,7 +272,7 @@ namespace EasyCNTK.Learning
                 countItems++;
                 for (int i = 0; i < properties.Count; i++)
                 {
-                    var value = Convert.ToDouble(properties[i].GetValue(item));
+                    double value = Convert.ToDouble(properties[i].GetValue(item));
 
                     if (value < result[i].Min)
                     {
