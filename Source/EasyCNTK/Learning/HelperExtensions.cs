@@ -130,6 +130,106 @@ namespace EasyCNTK.Learning
         }
 
         /// <summary>
+        /// На основе заданного множества примеров одного класса, создает необходимое количество синтетических примеров этого же класса, используя метод Synthetic Minority Over-sampling Technique (SMOTE)
+        /// Для корректной генерации входные данные должны быть нормализованы.
+        /// </summary>
+        /// <typeparam name="T">Тип элементов, поддеживаются все типы, реализующие <seealso cref="IConvertible"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="similarSampleCount">Количество похожих синтетических примеров, которое требуется создать</param>
+        /// <param name="nearestNeighborsCount">Количество ближаших соседей, используемых для геренации синтетического примера</param>
+        /// <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
+        /// <returns></returns>
+        public static IList<T[]> MakeSimilarSamplesBySMOTE<T>(this IList<T[]> source, int similarSampleCount, int nearestNeighborsCount = 5, int seed = 0) where T : IConvertible
+        {
+            double computeDistance(T[] first, T[] second)
+            {
+                if (first.Length != second.Length) throw new IndexOutOfRangeException("Размерность одного из примеров датасета отличается от остальных");
+                double distance = 0;
+
+                for (int i = 0; i < first.Length; i++)
+                {
+                    distance += Math.Abs(first[i].ToDouble(CultureInfo.InvariantCulture) - second[i].ToDouble(CultureInfo.InvariantCulture));
+                }
+                return distance;
+            }
+
+            if (source.Count < 2)
+                throw new ArgumentException("Исходная коллекция должна содержать минимум 2 элемента.", "source");
+            if (similarSampleCount < 1)
+                throw new ArgumentOutOfRangeException("similarSampleCount", "Число соседей должны быть больше 0.");
+            if (nearestNeighborsCount < 1)
+                throw new ArgumentOutOfRangeException("nearestNeighborsCount", "Число соседей должны быть больше 0.");
+
+            #region находим [nearestNeighborsCount] ближайших соседей для каждого примера
+            var nearestNeighborsIndexes = source
+                   .Select(p => Enumerable.Range(0, nearestNeighborsCount)
+                       .Select(q => (index: -1, distance: double.MaxValue))
+                       .ToList())
+                   .ToList();
+
+            for (int first = 0; first < source.Count; first++)
+            {
+                for (int second = first + 1; second < source.Count; second++)
+                {
+                    double distance = computeDistance(source[first], source[second]);
+
+                    #region обновляем индексы ближайших [nearestNeighborsCount] соседей у текущего примера и сравниваемого
+                    nearestNeighborsIndexes[first].Sort((a, b) =>
+                    {
+                        if (a.distance > b.distance)
+                            return -1;
+                        if (a.distance < b.distance)
+                            return 1;
+                        return 0;
+                    }); //сортировка текущих соседей по убыванию дистанции
+                    for (int k = 0; k < nearestNeighborsIndexes[first].Count; k++)
+                    {
+                        if (distance < nearestNeighborsIndexes[first][k].distance)
+                        {
+                            nearestNeighborsIndexes[first][k] = (second, distance);
+
+                            //если у второго(сравниваемого) соседа есть более дальние соседи, заменям их на первого(текущего) соседа
+                            int indexWorstNeighbor = nearestNeighborsIndexes[second].FindIndex(p => p.distance > distance);
+                            if (indexWorstNeighbor != -1)
+                            {
+                                nearestNeighborsIndexes[second][indexWorstNeighbor] = (first, distance);
+                            }
+                            break;
+                        }
+                    }
+                    #endregion
+                }
+            }
+            #endregion
+
+            #region создаем заданное количество синтетических примеров
+            Random rnd = seed == 0 ? new Random() : new Random(seed);
+            var elementTypeCode = source[0][0].GetTypeCode();
+            var result = new List<T[]>(similarSampleCount);
+            for (int i = 0; i < similarSampleCount; i++)
+            {
+                int indexRealSample = rnd.Next(source.Count);
+                var neighborIndexes = nearestNeighborsIndexes[i]
+                    .Where(p => p.index != -1)
+                    .ToList();
+                int indexRealNeighbor = neighborIndexes[rnd.Next(0, neighborIndexes.Count)].index;
+
+                var syntheticSample = new T[source[indexRealSample].Length];
+                for (int element = 0; element < syntheticSample.Length; element++)
+                {
+                    double difference = Math.Abs(source[indexRealSample][element].ToDouble(CultureInfo.InvariantCulture)
+                                                - source[indexRealNeighbor][element].ToDouble(CultureInfo.InvariantCulture));
+                    double gap = rnd.NextDouble();
+                    syntheticSample[element] = (T)Convert.ChangeType(gap * source[indexRealSample][element].ToDouble(CultureInfo.InvariantCulture), elementTypeCode);
+                }
+                result.Add(syntheticSample);
+            }
+            #endregion
+
+            return result;
+        }
+
+        /// <summary>
         /// Вычисляет статистику для каждого элемента коллекции. Допускает потерю точности при вычислении значений вне диапазона <seealso cref="double"/>
         /// </summary>
         /// <typeparam name="T">Поддерживается: <seealso cref="int"/>, <seealso cref="long"/>, <seealso cref="float"/>, <seealso cref="double"/>, <seealso cref="decimal"/></typeparam>
