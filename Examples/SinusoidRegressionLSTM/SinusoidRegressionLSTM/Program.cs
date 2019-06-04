@@ -23,9 +23,9 @@ namespace SinusoidRegressionLSTM
             var dataset = Enumerable.Range(1, 2000)
                 .Select(p => Math.Sin(p / 100.0)) //уменьшаем шаг, чтобы синусоида была плавнее
                 .Segment(10) //разбиваем синусоиду на сегменты по 10 элементов
-                .Select(p => (featureSequence: p.Take(9).Select(q => new[] { q }).ToList(), //задаем последовательность из 9 элементов, каждый элемент размерности 1 (может быть: 1, 2, 3...n)
+                .Select(p => (featureSequence: p.Take(9).Select(q => new[] { q }).ToArray(), //задаем последовательность из 9 элементов, каждый элемент размерности 1 (может быть: 1, 2, 3...n)
                                         label: new[] { p[9] })) //задаем метку для последовательности размерности 1 (может быть: 1, 2, 3...n)
-                .ToList();
+                .ToArray();
             dataset.Split(0.7, out var train, out var test);
 
             int minibatchSize = 16;
@@ -46,8 +46,8 @@ namespace SinusoidRegressionLSTM
             //model.Add(new Residual2(1, new Tanh()));
 
             //используется одна из нескольких перегрузок, которые способны обучать реккурентные сети
-            var fitResult = model.Fit(features:     train.Select(p => (IList<double[]>)p.featureSequence).ToList(), //приведение (IList<double[]>) временная мера, в дальнейших версиях этого не потребуется
-                labels:                             train.Select(p => p.label).ToList(),
+            var fitResult = model.Fit(features:     train.Select(p => p.featureSequence).ToArray(), 
+                labels:                             train.Select(p => p.label).ToArray(),
                 minibatchSize:                      minibatchSize,
                 lossFunction:                       new AbsoluteError(),
                 evaluationFunction:                 new AbsoluteError(),
