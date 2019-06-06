@@ -156,7 +156,7 @@ namespace EasyCNTK.Learning
             if (source.Count < 2)
                 throw new ArgumentException("Исходная коллекция должна содержать минимум 2 элемента.", "source");
             if (similarSampleCount < 1)
-                throw new ArgumentOutOfRangeException("similarSampleCount", "Число соседей должны быть больше 0.");
+                throw new ArgumentOutOfRangeException("similarSampleCount", "Число синтезируемых примеров должно быть больше 0.");
             if (nearestNeighborsCount < 1)
                 throw new ArgumentOutOfRangeException("nearestNeighborsCount", "Число соседей должны быть больше 0.");
 
@@ -209,7 +209,7 @@ namespace EasyCNTK.Learning
             for (int i = 0; i < similarSampleCount; i++)
             {
                 int indexRealSample = rnd.Next(source.Count);
-                var neighborIndexes = nearestNeighborsIndexes[i]
+                var neighborIndexes = nearestNeighborsIndexes[indexRealSample]
                     .Where(p => p.index != -1)
                     .ToList();
                 int indexRealNeighbor = neighborIndexes[rnd.Next(0, neighborIndexes.Count)].index;
@@ -217,10 +217,10 @@ namespace EasyCNTK.Learning
                 var syntheticSample = new T[source[indexRealSample].Length];
                 for (int element = 0; element < syntheticSample.Length; element++)
                 {
-                    double difference = Math.Abs(source[indexRealSample][element].ToDouble(CultureInfo.InvariantCulture)
-                                                - source[indexRealNeighbor][element].ToDouble(CultureInfo.InvariantCulture));
+                    double difference = source[indexRealSample][element].ToDouble(CultureInfo.InvariantCulture)
+                                                - source[indexRealNeighbor][element].ToDouble(CultureInfo.InvariantCulture);
                     double gap = rnd.NextDouble();
-                    syntheticSample[element] = (T)Convert.ChangeType(gap * source[indexRealSample][element].ToDouble(CultureInfo.InvariantCulture), elementTypeCode);
+                    syntheticSample[element] = (T)Convert.ChangeType(gap * difference + source[indexRealNeighbor][element].ToDouble(CultureInfo.InvariantCulture), elementTypeCode);
                 }
                 result.Add(syntheticSample);
             }
