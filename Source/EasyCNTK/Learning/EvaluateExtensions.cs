@@ -188,14 +188,18 @@ namespace EasyCNTK.Learning
                 confusionMatrix[expected, evaluated]++;
                 if (expected == evaluated)
                 {
-                    countAccurateSamples++;
-                    classesDistribution[evaluated].Precision++;
+                    countAccurateSamples++;                    
+                    classesDistribution[evaluated].Recall++;
                 }
+                classesDistribution[evaluated].Precision++;
                 countSamples++;
             }
             for (int i = 0; i < firstElement.EvaluatedValue.Count; i++)
             {
-                classesDistribution[i].Precision /= classesDistribution[i].Fraction;
+                classesDistribution[i].Precision = classesDistribution[i].Precision == 0 ? 0 : classesDistribution[i].Recall / classesDistribution[i].Precision;
+                classesDistribution[i].Recall /= classesDistribution[i].Fraction;
+                classesDistribution[i].F1Score = (classesDistribution[i].Precision + classesDistribution[i].Recall) == 0 ? 0
+                    : 2 * classesDistribution[i].Precision * classesDistribution[i].Recall / (classesDistribution[i].Precision + classesDistribution[i].Recall);
                 classesDistribution[i].Fraction /= countSamples;
                 for (int j = 0; j < firstElement.EvaluatedValue.Count; j++)
                 {
@@ -251,14 +255,17 @@ namespace EasyCNTK.Learning
                     classesDistribution[target].Fraction++;
                     if (evaluated.Contains(target))
                     {
-                        classesDistribution[target].Precision++;
+                        classesDistribution[target].Recall++;
                     }
                     countLabels++;
-                }                 
+                }
+                evaluated.ForEach(evaluate => classesDistribution[evaluate].Precision++);
             }
             classesDistribution.ForEach(p =>
             {
-                p.Precision /= p.Fraction;
+                p.Precision = p.Precision == 0 ? 0 : p.Recall / p.Precision;
+                p.Recall /= p.Fraction;
+                p.F1Score = (p.Precision + p.Recall) == 0 ? 0 : 2 * p.Precision * p.Recall / (p.Precision + p.Recall);
                 p.Fraction /= countLabels;
             });
 
