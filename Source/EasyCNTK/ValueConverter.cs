@@ -44,6 +44,20 @@ namespace EasyCNTK
                 yield return list;
             }
         }
+        protected T[] GetVector<T>(T[,] matrix)
+        {
+            var width = matrix.GetLength(0);
+            var height = matrix.GetLength(1);
+            var result = new T[width * height];
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    result[(i + 1) * j] = matrix[i, j];
+                }
+            }
+            return result;
+        }
         /// <summary>
         /// Преобразует датасет в наборы обучающих примеров для использования в реккурентных сетях. 
         /// </summary>
@@ -112,7 +126,7 @@ namespace EasyCNTK
         {
             foreach (var segment in GetSegments(dataset, minibatchSize))
             {
-                var features = segment.SelectMany(p => getVector(p.Features));
+                var features = segment.SelectMany(p => GetVector(p.Features));
                 var labels = segment.SelectMany(p => p.Labels);
 
                 Minibatch minibatch = new Minibatch();
@@ -173,26 +187,11 @@ namespace EasyCNTK
         {
             foreach (var segment in GetSegments(data, minibatchSize))
             {
-                var features = segment.SelectMany(p => getVector(p.Features));
+                var features = segment.SelectMany(p => GetVector(p.Features));
                 var value = Value.CreateBatch(new int[] { segment[0].Features.GetLength(0), segment[0].Features.GetLength(1), 1 }, features, device);
                 yield return value;
             }
-        }
-
-        private T[] getVector<T>(T[,] matrix)
-        {
-            var width = matrix.GetLength(0);
-            var height = matrix.GetLength(1);
-            var result = new T[width * height];
-            for (int i = 0; i < width; i++)
-            {
-                for (int j = 0; j < height; j++)
-                {
-                    result[(i + 1) * j] = matrix[i, j];
-                }
-            }
-            return result;
-        }
+        } 
     }
     /// <summary>
     /// Представляет пример, признаки у которого представлены в 2Д (матрица)

@@ -374,7 +374,7 @@ namespace EasyCNTK.Learning
 
         #region Predict<T>
         /// <summary>
-        /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+        /// Вычисляет выходные значения модели для каждого из входных примеров (пример - пользовательский). (Inference).
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
@@ -449,6 +449,18 @@ namespace EasyCNTK.Learning
             ValueConverter valueConverter = new ValueConverter();
             var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
             return source.Predict<T>(values, device);
+        }
+
+        /// <summary>
+        /// Вычисляет выходные значения модели одного примера (пример - пользовательский). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static T[] Predict<T>(this Function source, Value data, DeviceDescriptor device) where T:IConvertible
+        {
+            return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
@@ -561,6 +573,18 @@ namespace EasyCNTK.Learning
         #endregion
 
         #region Predict<T>
+
+        /// <summary>
+        /// Вычисляет выходные значения модели одного примера (пример - пользовательский). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static T[] Predict<T>(this Sequential<T> source, Value data, DeviceDescriptor device) where T : IConvertible
+        {
+            return source.Model.Predict<T>(data, device);
+        }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
         /// </summary>
