@@ -322,7 +322,7 @@ namespace EasyCNTK.Learning
             int inputDim,
             DeviceDescriptor device) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(testData, inputDim, 1, device);
             return source.Evaluate<T>(test, device);
         }
@@ -340,7 +340,7 @@ namespace EasyCNTK.Learning
             IEnumerable<T[]> labels,
             DeviceDescriptor device) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(features, labels, 1, device);
             return source.Evaluate<T>(test, device);
         }
@@ -356,7 +356,7 @@ namespace EasyCNTK.Learning
             IEnumerable<Sample2D<T>> testData,
             DeviceDescriptor device) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(testData, 1, device);
             return source.Evaluate<T>(test, device);
         }
