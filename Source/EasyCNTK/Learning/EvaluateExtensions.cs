@@ -188,14 +188,18 @@ namespace EasyCNTK.Learning
                 confusionMatrix[expected, evaluated]++;
                 if (expected == evaluated)
                 {
-                    countAccurateSamples++;
-                    classesDistribution[evaluated].Precision++;
+                    countAccurateSamples++;                    
+                    classesDistribution[evaluated].Recall++;
                 }
+                classesDistribution[evaluated].Precision++;
                 countSamples++;
             }
             for (int i = 0; i < firstElement.EvaluatedValue.Count; i++)
             {
-                classesDistribution[i].Precision /= classesDistribution[i].Fraction;
+                classesDistribution[i].Precision = classesDistribution[i].Precision == 0 ? 0 : classesDistribution[i].Recall / classesDistribution[i].Precision;
+                classesDistribution[i].Recall /= classesDistribution[i].Fraction;
+                classesDistribution[i].F1Score = (classesDistribution[i].Precision + classesDistribution[i].Recall) == 0 ? 0
+                    : 2 * classesDistribution[i].Precision * classesDistribution[i].Recall / (classesDistribution[i].Precision + classesDistribution[i].Recall);
                 classesDistribution[i].Fraction /= countSamples;
                 for (int j = 0; j < firstElement.EvaluatedValue.Count; j++)
                 {
@@ -251,14 +255,17 @@ namespace EasyCNTK.Learning
                     classesDistribution[target].Fraction++;
                     if (evaluated.Contains(target))
                     {
-                        classesDistribution[target].Precision++;
+                        classesDistribution[target].Recall++;
                     }
                     countLabels++;
-                }                 
+                }
+                evaluated.ForEach(evaluate => classesDistribution[evaluate].Precision++);
             }
             classesDistribution.ForEach(p =>
             {
-                p.Precision /= p.Fraction;
+                p.Precision = p.Precision == 0 ? 0 : p.Recall / p.Precision;
+                p.Recall /= p.Fraction;
+                p.F1Score = (p.Precision + p.Recall) == 0 ? 0 : 2 * p.Precision * p.Recall / (p.Precision + p.Recall);
                 p.Fraction /= countLabels;
             });
 
@@ -273,6 +280,7 @@ namespace EasyCNTK.Learning
 
         #region Function extensions
 
+        #region Evaluate<T>
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
         /// </summary>
@@ -283,9 +291,9 @@ namespace EasyCNTK.Learning
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<Minibatch> testData,
-            DeviceDescriptor device) where T:IConvertible
+            DeviceDescriptor device) where T : IConvertible
         {
-            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");            
+            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");
             foreach (var miniBatch in testData)
             {
                 var inputDataMap = new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features } };
@@ -296,8 +304,11 @@ namespace EasyCNTK.Learning
                 var expected = miniBatch.Labels.GetDenseData<T>(source.Output);
                 var evaluated = outputDataMap[source.Output].GetDenseData<T>(source.Output);
 
-                var evaluateItem = new EvaluateItem<T>(expected[0], evaluated[0]);
-                yield return evaluateItem;
+                foreach (var item in expected.Zip(evaluated, (exp, eval) => (exp, eval)))
+                {
+                    var evaluateItem = new EvaluateItem<T>(item.exp, item.eval);
+                    yield return evaluateItem;
+                }
             }
         }
         /// <summary>
@@ -309,14 +320,16 @@ namespace EasyCNTK.Learning
         /// Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
         /// <param name="inputDim">Размерность признаков (разрядность)</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<T[]> testData,
             int inputDim,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
-            var test = valueConverter.ConvertDatasetToMinibatch(testData, inputDim, 1, device);
+            DataConverter valueConverter = new DataConverter();
+            var test = valueConverter.ConvertDatasetToMinibatch(testData, inputDim, minibatchSize, device);
             return source.Evaluate<T>(test, device);
         }
         /// <summary>
@@ -327,14 +340,16 @@ namespace EasyCNTK.Learning
         /// <param name="features">Набор тестовых последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
         /// <param name="labels">Набор тестовых меток. Размерность меток должна быть одинаковая.</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<IList<T[]>> features,
             IEnumerable<T[]> labels,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
-            var test = valueConverter.ConvertDatasetToMinibatch(features, labels, 1, device);
+            DataConverter valueConverter = new DataConverter();
+            var test = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize, device);
             return source.Evaluate<T>(test, device);
         }
         /// <summary>
@@ -344,18 +359,137 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="testData">Набор тестовых данных</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<Sample2D<T>> testData,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
-            var test = valueConverter.ConvertDatasetToMinibatch(testData, 1, device);
+            DataConverter valueConverter = new DataConverter();
+            var test = valueConverter.ConvertDatasetToMinibatch(testData, minibatchSize, device);
             return source.Evaluate<T>(test, device);
         }
         #endregion
 
+        #region Predict<T>
+        /// <summary>
+        /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="data">Набор примеров для которых вычисляется выход</param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static IEnumerable<T[]> Predict<T>(this Function source,
+           IEnumerable<Value> data,
+           DeviceDescriptor device) where T : IConvertible
+        {
+            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");
+            foreach (var features in data)
+            {
+                var inputDataMap = new Dictionary<Variable, Value>() { { inputVariable, features } };
+                var outputDataMap = new Dictionary<Variable, Value>() { { source.Output, null } };
+
+                source.Evaluate(inputDataMap, outputDataMap, device);
+
+                var predicted = outputDataMap[source.Output].GetDenseData<T>(source.Output);
+
+                foreach (var item in predicted)
+                {
+                    yield return (T[])item;
+                }
+            }
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="data">Набор примеров для которых вычисляется выход</param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static IEnumerable<T[]> Predict<T>(this Function source,
+            IEnumerable<T[]> data,
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
+        {
+            DataConverter valueConverter = new DataConverter();
+            var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
+            return source.Predict<T>(values, device);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static IEnumerable<T[]> Predict<T>(this Function source,
+            IEnumerable<IList<T[]>> data,
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
+        {
+            DataConverter valueConverter = new DataConverter();
+            var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
+            return source.Predict<T>(values, device);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static IEnumerable<T[]> Predict<T>(this Function source,
+            IEnumerable<Sample2D<T>> data,
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
+        {
+            DataConverter valueConverter = new DataConverter();
+            var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
+            return source.Predict<T>(values, device);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static T[] Predict<T>(this Function source, T[] data, DeviceDescriptor device) where T : IConvertible
+        {
+            return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели одного примера. (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static T[] Predict<T>(this Function source, IList<T[]> data, DeviceDescriptor device) where T : IConvertible
+        {
+            return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static T[] Predict<T>(this Function source, Sample2D<T> data, DeviceDescriptor device) where T : IConvertible
+        {
+            return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+        }
+        #endregion
+
+        #endregion
+
         #region Sequential extensions   
+
+        #region Evaluate<T>
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
         /// </summary>
@@ -363,6 +497,7 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="testData">Тестовые данные. Каждый минипакет должен содержать 1 тестовый пример.</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<Minibatch> testData,
@@ -379,13 +514,15 @@ namespace EasyCNTK.Learning
         /// Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
         /// <param name="inputDim">Размерность признаков (разрядность)</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<T[]> testData,
             int inputDim,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
         {
-            return source.Model.Evaluate<T>(testData, inputDim, device);
+            return source.Model.Evaluate<T>(testData, inputDim, device, minibatchSize);
         }
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
@@ -395,13 +532,15 @@ namespace EasyCNTK.Learning
         /// <param name="features">Набор тестовых последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
         /// <param name="labels">Набор тестовых меток. Размерность меток должна быть одинаковая.</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<IList<T[]>> features,
             IEnumerable<T[]> labels,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
         {
-            return source.Model.Evaluate<T>(features, labels, device);
+            return source.Model.Evaluate<T>(features, labels, device, minibatchSize);
         }
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
@@ -410,13 +549,109 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="testData">Набор тестовых данных</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<Sample2D<T>> testData,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
         {
-            return source.Model.Evaluate<T>(testData, device);
-        } 
+            return source.Model.Evaluate<T>(testData, device, minibatchSize);
+        }
+        #endregion
+
+        #region Predict<T>
+        /// <summary>
+        /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="data">Набор примеров для которых вычисляется выход</param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
+           IEnumerable<Value> data,
+           DeviceDescriptor device) where T : IConvertible
+        {
+            return source.Model.Predict<T>(data, device);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="data">Набор примеров для которых вычисляется выход</param>
+        /// <param name="device
+        public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
+            IEnumerable<T[]> data,
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
+        {           
+            return source.Model.Predict<T>(data, device, minibatchSize);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
+            IEnumerable<IList<T[]>> data,
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
+        {            
+            return source.Model.Predict<T>(data, device, minibatchSize);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
+            IEnumerable<Sample2D<T>> data,
+            DeviceDescriptor device,
+            int minibatchSize = 512) where T : IConvertible
+        {           
+            return source.Model.Predict<T>(data, device, minibatchSize);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели одного примера. (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static T[] Predict<T>(this Sequential<T> source, T[] data, DeviceDescriptor device) where T : IConvertible
+        {
+            return source.Model.Predict<T>(data, device);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static T[] Predict<T>(this Sequential<T> source, IList<T[]> data, DeviceDescriptor device) where T : IConvertible
+        {
+            return source.Model.Predict<T>(data, device);
+        }
+        /// <summary>
+        /// Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public static T[] Predict<T>(this Sequential<T> source, Sample2D<T> data, DeviceDescriptor device) where T : IConvertible
+        {
+            return source.Model.Predict<T>(data, device);
+        }
+        #endregion
+
         #endregion
     }
 }

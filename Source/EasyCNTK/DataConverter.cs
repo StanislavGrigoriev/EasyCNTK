@@ -18,7 +18,7 @@ namespace EasyCNTK
     /// <summary>
     /// Реализует методы преобразования сырых данных в формат пригодный для обучения в CNTK
     /// </summary>
-    public class ValueConverter
+    public class DataConverter
     {
         /// <summary>
         /// Разбивает входную последовательность на сегменты (подпоследовательности) равного размера
@@ -110,27 +110,72 @@ namespace EasyCNTK
         /// <returns></returns>
         public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<Sample2D<T>> dataset, int minibatchSize, DeviceDescriptor device) where T : IConvertible
         {
-            int currentMinibatchSize = 0;
-            var features = new List<T>();
-            var labels = new List<T>();
-
-            foreach (var item in dataset)
+            foreach (var segment in GetSegments(dataset, minibatchSize))
             {
-                features.AddRange(getVector(item.Features));
-                labels.AddRange(item.Labels);
-                currentMinibatchSize++;
-                if (minibatchSize == currentMinibatchSize)
-                {
-                    Minibatch minibatch = new Minibatch();
-                    minibatch.Size = minibatchSize;
-                    minibatch.Features = Value.CreateBatch(new int[] { item.Features.GetLength(0), item.Features.GetLength(1), 1 }, features, device);
-                    minibatch.Labels = Value.CreateBatch(new int[] { item.Labels.GetLength(0) }, labels, device);
-                    currentMinibatchSize = 0;
-                    features = new List<T>();
-                    labels = new List<T>();
+                var features = segment.SelectMany(p => getVector(p.Features));
+                var labels = segment.SelectMany(p => p.Labels);
 
-                    yield return minibatch;
-                }
+                Minibatch minibatch = new Minibatch();
+                minibatch.Size = segment.Count;
+                minibatch.Features = Value.CreateBatch(new int[] { segment[0].Features.GetLength(0), segment[0].Features.GetLength(1), 1 }, features, device);
+                minibatch.Labels = Value.CreateBatch(new int[] { segment[0].Labels.GetLength(0) }, labels, device);   
+
+                yield return minibatch;
+            }
+        }
+        /// <summary>
+        /// Преобразует нативный набор признаков в набор признаков в формате CNTK.
+        /// </summary>
+        /// <typeparam name="T">Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="data">Набор признаков для каждого примера(sample)</param>
+        /// <param name="minibatchSize">Размер пакета, по которым разбиваются признаки</param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public IEnumerable<Value> ConvertDataToValue<T>(IEnumerable<IList<T>> data, int minibatchSize, DeviceDescriptor device) where T : IConvertible
+        {
+            int inputDim = data.FirstOrDefault()?.Count ?? 0;
+            foreach (var segment in GetSegments(data, minibatchSize))
+            {
+                var features = segment.SelectMany(p => p).ToArray();
+                var value = Value.CreateBatch(new int[] { inputDim }, features, device);
+                yield return value;
+            }
+        }
+        /// <summary>
+        /// Преобразует нативный набор признаков (последовательность) в набор признаков в формате CNTK.
+        /// </summary>
+        /// <typeparam name="T">Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="data">Набор признаков для каждого примера(sample), где пример - последовательность</param>
+        /// <param name="minibatchSize">Размер пакета, по которым разбиваются признаки</param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public IEnumerable<Value> ConvertDataToValue<T>(IEnumerable<IList<T[]>> data, int minibatchSize, DeviceDescriptor device) where T : IConvertible
+        {
+            int inputDim = data.FirstOrDefault()[0].Length;
+            foreach (var segment in GetSegments(data, minibatchSize))
+            {
+                //{}-miniBatch, ()-sequence, []-features.  
+                //{ ([inputDim], [inputDim], [inputDim]), ([inputDim], [inputDim]) } => { [inputDim * 3], [inputDim * 2] }
+                var featuresTransformed = segment.Select(p => p.SelectMany(q => q));
+                var value = Value.CreateBatchOfSequences(new[] { inputDim }, featuresTransformed, device);
+                yield return value;
+            }
+        }
+        /// <summary>
+        /// Преобразует нативный набор признаков (2D) в набор признаков в формате CNTK.
+        /// </summary>
+        /// <typeparam name="T">Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="data">Набор признаков для каждого примера(sample), где пример - 2D</param>
+        /// <param name="minibatchSize">Размер пакета, по которым разбиваются признаки</param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <returns></returns>
+        public IEnumerable<Value> ConvertDataToValue<T>(IEnumerable<Sample2D<T>> data, int minibatchSize, DeviceDescriptor device) where T : IConvertible
+        {
+            foreach (var segment in GetSegments(data, minibatchSize))
+            {
+                var features = segment.SelectMany(p => getVector(p.Features));
+                var value = Value.CreateBatch(new int[] { segment[0].Features.GetLength(0), segment[0].Features.GetLength(1), 1 }, features, device);
+                yield return value;
             }
         }
 

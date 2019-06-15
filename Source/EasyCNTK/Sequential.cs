@@ -21,7 +21,7 @@ namespace EasyCNTK
     /// Реализует операции конструирования модели прямого распространения
     /// </summary>
     /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
-    public sealed class Sequential<T> where T : IConvertible
+    public sealed class Sequential<T> : IDisposable where T : IConvertible
     {
         public const string PREFIX_FILENAME_DESCRIPTION = "ArchitectureDescription";
         private DeviceDescriptor _device { get; }
@@ -208,6 +208,16 @@ namespace EasyCNTK
         public override string ToString()
         {
             return getArchitectureDescription();
+        }
+
+        public void Dispose()
+        {
+            Model.Dispose();
+            _device.Dispose();
+            foreach (var shortcut in _shortcutConnectionInputs.Values)
+            {
+                shortcut.Dispose();
+            }
         }
     }
 }
