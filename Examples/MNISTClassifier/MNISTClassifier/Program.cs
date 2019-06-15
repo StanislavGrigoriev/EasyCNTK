@@ -104,7 +104,7 @@ namespace MNISTClassifier
 
             Console.WriteLine($"---Train---");
             Console.WriteLine($"Accuracy: {metricsTrain.Accuracy}");
-            metricsTrain.ClassesDistribution.ForEach(p => Console.WriteLine($"Class: {p.Index} | Precision: {p.Precision:F5} | Fraction: {p.Fraction * 100:F3}"));
+            metricsTrain.ClassesDistribution.ForEach(p => Console.WriteLine($"Class: {p.Index} | Precision: {p.Precision:F5} | Recall: {p.Recall:F5} | Fraction: {p.Fraction * 100:F3}"));
 
             var metricsTest = model
                 .Evaluate(datasetTest, inputDimension, device)
@@ -112,7 +112,7 @@ namespace MNISTClassifier
   
             Console.WriteLine($"---Test---");
             Console.WriteLine($"Accuracy: {metricsTest.Accuracy}");
-            metricsTest.ClassesDistribution.ForEach(p => Console.WriteLine($"Class: {p.Index} | Precision: {p.Precision:F5} | Fraction: {p.Fraction * 100:F3}"));
+            metricsTest.ClassesDistribution.ForEach(p => Console.WriteLine($"Class: {p.Index} | Precision: {p.Precision:F5} | Recall: {p.Recall:F5} | Fraction: {p.Fraction * 100:F3}"));
 
             Console.Read();
         }

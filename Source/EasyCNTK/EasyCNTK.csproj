@@ -5,19 +5,25 @@
     <Platforms>x64</Platforms>
     <LangVersion>latest</LangVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>0.2.0</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.3.0</Version>
     <Authors>Stanislav Grigoriev</Authors>
     <Company>Stanislav Grigoriev</Company>
-    <Description>C# library for DeepLerning. It is wrapper over C# CNTK API. Has implementantion of layers (LSTM, Convolution etc.), optimizers, losses etc. 
-Allows train and evaluate deep neural networks in style similar to Keras.</Description>
+    <Description>C# library for easy Deep Learning. It is wrapper over C# CNTK API. Has implementation of layers (LSTM, Convolution etc.), optimizers, losses, shortcut-connections, sequential model etc. 
+Contains helpers for work with dataset (split, statistics, SMOTE etc).
+Allows train, evaluate and inference deep neural networks in style similar to Keras.</Description>
     <Copyright>Stanislav Grigoriev (c)</Copyright>
     <PackageLicenseUrl>https://licenses.nuget.org/MIT</PackageLicenseUrl>
-    <PackageTags>c# cntk deep-learning machine-learning deep-neural-networks</PackageTags>
+    <PackageTags>c# cntk deep-learning machine-learning deep-neural-networks keras</PackageTags>
     <PackageProjectUrl>https://github.com/StanislavGrigoriev/EasyCNTK</PackageProjectUrl>
     <RepositoryUrl>https://github.com/StanislavGrigoriev/EasyCNTK</RepositoryUrl>
     <RepositoryType>public</RepositoryType>
     <PackageId>EasyCNTK</PackageId>
+    <PackageIconUrl>https://raw.githubusercontent.com/StanislavGrigoriev/EasyCNTK/master/logo.ico</PackageIconUrl>
+    <PackageReleaseNotes>Add classification metrics (precision, recall)
+Add SMOTE
+Add Predict method for model (inference)
+Add comments to some methods</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
