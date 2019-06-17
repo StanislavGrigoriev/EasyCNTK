@@ -328,7 +328,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(testData, inputDim, minibatchSize, device);
             return source.Evaluate<T>(test, device);
         }
@@ -348,7 +348,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize, device);
             return source.Evaluate<T>(test, device);
         }
@@ -366,7 +366,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var test = valueConverter.ConvertDatasetToMinibatch(testData, minibatchSize, device);
             return source.Evaluate<T>(test, device);
         }
@@ -414,7 +414,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
             return source.Predict<T>(values, device);
         }
@@ -430,7 +430,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
             return source.Predict<T>(values, device);
         }
@@ -446,7 +446,7 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
             return source.Predict<T>(values, device);
         }

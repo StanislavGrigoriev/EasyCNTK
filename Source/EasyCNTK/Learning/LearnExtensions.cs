@@ -166,7 +166,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             IList<Minibatch> minibatches = null;
             if (!shuffleSampleInMinibatchesPerEpoch)
             {
@@ -217,7 +217,7 @@ namespace EasyCNTK.Learning
         {
             if (features.Count != labels.Count) throw new ArgumentException("Количество поледовательностей(features) и меток(labels) должно быть одинаковым.");
 
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             IList<Minibatch> minibatches = null;
             if (!shuffleSampleInMinibatchesPerEpoch)
             {
@@ -266,7 +266,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             IList<Minibatch> minibatches = null;
             if (!shuffleSampleInMinibatchesPerEpoch)
             {
@@ -314,7 +314,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize, device);
             return source.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -348,7 +348,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize, device);
             return source.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch);
         }
@@ -380,7 +380,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            ValueConverter valueConverter = new ValueConverter();
+            DataConverter valueConverter = new DataConverter();
             var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, minibatchSize, device);
             return source.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
         }

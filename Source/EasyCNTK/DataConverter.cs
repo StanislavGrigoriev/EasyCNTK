@@ -18,7 +18,7 @@ namespace EasyCNTK
     /// <summary>
     /// Реализует методы преобразования сырых данных в формат пригодный для обучения в CNTK
     /// </summary>
-    public class ValueConverter
+    public class DataConverter
     {
         /// <summary>
         /// Разбивает входную последовательность на сегменты (подпоследовательности) равного размера
