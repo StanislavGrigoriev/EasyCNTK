@@ -328,8 +328,8 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var test = valueConverter.ConvertDatasetToMinibatch(testData, inputDim, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var test = valueConverter.ConvertDatasetToMinibatch(testData, inputDim, minibatchSize);
             return source.Evaluate<T>(test, device);
         }
         /// <summary>
@@ -348,8 +348,8 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var test = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var test = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize);
             return source.Evaluate<T>(test, device);
         }
         /// <summary>
@@ -357,17 +357,18 @@ namespace EasyCNTK.Learning
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
-        /// <param name="testData">Набор тестовых данных</param>
+        /// <param name="features">Набор тестовых данных</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
-            IEnumerable<Sample2D<T>> testData,
+            IEnumerable<T[,]> features,
+            IEnumerable<T[]> labels,
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var test = valueConverter.ConvertDatasetToMinibatch(testData, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var test = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize);
             return source.Evaluate<T>(test, device);
         }
         #endregion
@@ -414,8 +415,8 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var values = valueConverter.ConvertDataToValue(data, minibatchSize);
             return source.Predict<T>(values, device);
         }
         /// <summary>
@@ -430,8 +431,8 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var values = valueConverter.ConvertDataToValue(data, minibatchSize);
             return source.Predict<T>(values, device);
         }
         /// <summary>
@@ -442,12 +443,12 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Function source,
-            IEnumerable<Sample2D<T>> data,
+            IEnumerable<T[,]> data,
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var values = valueConverter.ConvertDataToValue(data, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var values = valueConverter.ConvertDataToValue(data, minibatchSize);
             return source.Predict<T>(values, device);
         }
 
@@ -491,7 +492,7 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Function source, Sample2D<T> data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Function source, T[,] data, DeviceDescriptor device) where T : IConvertible
         {
             return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
         }
@@ -559,16 +560,17 @@ namespace EasyCNTK.Learning
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
-        /// <param name="testData">Набор тестовых данных</param>
+        /// <param name="features">Набор тестовых данных</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
-            IEnumerable<Sample2D<T>> testData,
+            IEnumerable<T[,]> features,
+            IEnumerable<T[]> labels,
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {
-            return source.Model.Evaluate<T>(testData, device, minibatchSize);
+            return source.Model.Evaluate<T>(features, labels, device, minibatchSize);
         }
         #endregion
 
@@ -635,7 +637,7 @@ namespace EasyCNTK.Learning
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
-            IEnumerable<Sample2D<T>> data,
+            IEnumerable<T[,]> data,
             DeviceDescriptor device,
             int minibatchSize = 512) where T : IConvertible
         {           
@@ -670,7 +672,7 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Sequential<T> source, Sample2D<T> data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Sequential<T> source, T[,] data, DeviceDescriptor device) where T : IConvertible
         {
             return source.Model.Predict<T>(data, device);
         }

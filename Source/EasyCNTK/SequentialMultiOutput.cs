@@ -14,32 +14,45 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace EasyCNTK
 {
     /// <summary>
-    /// Реализует операции конструирования модели прямого распространения c одним входом и одним выходом
+    /// Реализует операции конструирования модели прямого распространения c одним входом и несколькими выходами
     /// </summary>
     /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
-    public sealed class Sequential<T> : IDisposable where T : IConvertible
+    public sealed class SequentialMultiOutput<T>: IDisposable where T:IConvertible
     {
+        class Branch
+        {
+            public int Index { get; set; }
+            public string Name { get; set; }
+            public string ArchitectureDescription { get; set; }
+            public Function Model { get; set; }
+        }
+
         public const string PREFIX_FILENAME_DESCRIPTION = "ArchitectureDescription";
         private DeviceDescriptor _device;
+        private Function _model;
         private string _architectureDescription;
-        private Dictionary<string, Function> _shortcutConnectionInputs = new Dictionary<string, Function>();
-
+        private Dictionary<string, Branch> _branches = new Dictionary<string, Branch>();        
+        private bool _isCompiled = false;
         private string getArchitectureDescription()
         {
-            var shortcuts = _shortcutConnectionInputs.Keys.ToList();
-            foreach (var shortcut in shortcuts)
+            var descriptionBranches = _branches
+                .Values
+                .OrderBy(p => p.Index)
+                .Select(p => p.ArchitectureDescription);
+            StringBuilder stringBuilder = new StringBuilder(_architectureDescription);
+            foreach (var branch in descriptionBranches)
             {
-                if (!_architectureDescription.Contains($"ShortOut({shortcut})"))
-                {
-                    _architectureDescription = _architectureDescription.Replace($"-ShortIn({shortcut})", "");
-                }
+                stringBuilder.Append(branch);
+                stringBuilder.Append("[OUT]");
             }
-            return _architectureDescription + "[OUT]";
+            return stringBuilder.ToString();
         }
+
         /// <summary>
         /// Загружает модель из файла. Так же пытается прочитать описание архитектуры сети: 
         /// 1) Из файла ArchitectureDescription{имя_файла_модели}.txt 
@@ -50,11 +63,10 @@ namespace EasyCNTK
         /// <param name="filePath">Путь к файлу модели</param>
         /// <param name="modelFormat">Формат модели</param>
         /// <returns></returns>
-        public static Sequential<T> LoadModel(DeviceDescriptor device, string filePath, ModelFormat modelFormat = ModelFormat.CNTKv2)
+        public static SequentialMultiOutput<T> LoadModel(DeviceDescriptor device, string filePath, ModelFormat modelFormat = ModelFormat.CNTKv2)
         {
-            return new Sequential<T>(device, filePath, modelFormat);
+            return new SequentialMultiOutput<T>(device, filePath, modelFormat);
         }
-
         /// <summary>
         /// Инициализирeует нейросеть с размерностью входного вектора без слоев
         /// </summary>
@@ -63,11 +75,11 @@ namespace EasyCNTK
         /// <param name="outputIsSequence">Указывает, что выход сети - последовательность.</param>
         /// <param name="inputName">Имя входа нейросети</param>
         /// <param name="isSparce">Указывает, что вход это вектор One-Hot-Encoding и следует использовать внутреннюю оптимизацию CNTK для увеличения производительности.</param>
-        public Sequential(DeviceDescriptor device, int[] inputShape, bool outputIsSequence = false, string inputName = "Input", bool isSparce = false)
+        public SequentialMultiOutput(DeviceDescriptor device, int[] inputShape, bool outputIsSequence = false, string inputName = "Input", bool isSparce = false)
         {
             _device = device;
             var dataType = typeof(T) == typeof(double) ? DataType.Double : DataType.Float;
-            Model = outputIsSequence
+            _model = outputIsSequence
                 ? Variable.InputVariable(inputShape, dataType, inputName, new[] { Axis.DefaultBatchAxis() }, isSparce)
                 : Variable.InputVariable(inputShape, dataType, inputName, null, isSparce);
             var shape = "";
@@ -79,14 +91,15 @@ namespace EasyCNTK
             _architectureDescription = $"[IN]{shape}";
         }
 
-        private Sequential(DeviceDescriptor device, string filePath, ModelFormat modelFormat = ModelFormat.CNTKv2)
+        private SequentialMultiOutput(DeviceDescriptor device, string filePath, ModelFormat modelFormat = ModelFormat.CNTKv2)
         {
+            _isCompiled = true;
             _device = device;
-            Model = Function.Load(filePath, device, modelFormat);
+            _model = Function.Load(filePath, device, modelFormat);
             var dataType = typeof(T) == typeof(double) ? DataType.Double : DataType.Float;
-            if (Model.Output.DataType != dataType)
+            if (_model.Output.DataType != dataType)
             {
-                throw new ArgumentException($"Универсальный параметр {nameof(T)} не сответствует типу данных в модели. Требуемый тип: {Model.Output.DataType}");
+                throw new ArgumentException($"Универсальный параметр {nameof(T)} не сответствует типу данных в модели. Требуемый тип: {_model.Output.DataType}");
             }
             try
             {
@@ -104,7 +117,7 @@ namespace EasyCNTK
 
                 var fileName = Path.GetFileName(filePath);
                 var indexIn = fileName.IndexOf("[IN]");
-                var indexOut = fileName.IndexOf("[OUT]");
+                var indexOut = fileName.LastIndexOf("[OUT]");
                 bool fileNameContainsArchitectureDescription = indexIn != -1 && indexOut != -1 && indexIn < indexOut;
                 if (fileNameContainsArchitectureDescription)
                 {
@@ -122,71 +135,94 @@ namespace EasyCNTK
         /// <param name="layer">Слой для стыковки</param>
         public void Add(Layer layer)
         {
-            Model = layer.Create(Model, _device);
+            if (_isCompiled)
+                throw new NotSupportedException("Изменение скомпилированной модели не поддерживается.");
+            _model = layer.Create(_model, _device);
             _architectureDescription += $"-{layer.GetDescription()}";
         }
         /// <summary>
-        /// Создает входную точку для SC, из которой можно создать соединение к следующим слоям сети. Для одной входной точки должна существовать как минимум одна выходная точка, иначе соединение игнорируется в модели.
+        /// Добавляет заданный слой в указанную ветвь (стыкует к последнему добавленному слою ветви)
         /// </summary>
-        /// <param name="nameShortcutConnection">Название точки входа, из которой будет пробрасываться соединение. В рамках сети должно быть уникальным</param>
-        public void CreateInputPointForShortcutConnection(string nameShortcutConnection)
+        /// <param name="branch">Имя ветви. Должно совпадать с одним из имен указанных при вызове <seealso cref="SplitToBranches(string[])"/></param>
+        /// <param name="layer">Слой для стыковки</param>
+        public void AddToBranch(string branch, Layer layer)
         {
-            _shortcutConnectionInputs.Add(nameShortcutConnection, Model);
-            _architectureDescription += $"-ShortIn({nameShortcutConnection})";
-        }
-        /// <summary>
-        /// Создает выходную точку для SC, к которой пробрасывается соединение из ранее созданной входной точки. Для одной входной точки может существовать несколько выходных точек.
-        /// </summary>
-        /// <param name="nameShortcutConnection">Название точки входа, из которой пробрасывается соединение.</param>
-        public void CreateOutputPointForShortcutConnection(string nameShortcutConnection)
-        {
-            if (_shortcutConnectionInputs.TryGetValue(nameShortcutConnection, out var input))
+            if (_isCompiled)
+                throw new NotSupportedException("Изменение скомпилированной модели не поддерживается.");
+            if (_branches.Count == 0)
+                throw new NotSupportedException("Добавления слоя к ветви без предварительного создания ветвей не поддерживается, сначала создайте ветви методом SplitToBranches()");
+            if (_branches.TryGetValue(branch, out var branchOutput))
             {
-                if (input.Output.Shape.Equals(Model.Output.Shape))
-                {
-                    Model = CNTKLib.Plus(Model, input);
-                }
-                else if (input.Output.Shape.Rank != 1 && Model.Output.Shape.Rank == 1) // [3x4x2] => [5]
-                {
-                    int targetDim = Model.Output.Shape[0];
-                    int inputDim = input.Output.Shape.Dimensions.Aggregate((d1, d2) => d1 * d2);
-                    var inputVector = CNTKLib.Reshape(input, new[] { inputDim });
-
-                    var scale = new Parameter(new[] { targetDim, inputDim }, input.Output.DataType, CNTKLib.UniformInitializer(CNTKLib.DefaultParamInitScale), _device);
-                    var scaled = CNTKLib.Times(scale, inputVector);
-
-                    var reshaped = CNTKLib.Reshape(scaled, Model.Output.Shape);
-                    Model = CNTKLib.Plus(reshaped, Model);
-                }
-                else if (input.Output.Shape.Rank == 1 && Model.Output.Shape.Rank != 1) // [5] => [3x4x2]
-                {
-                    int targetDim = Model.Output.Shape.Dimensions.Aggregate((d1, d2) => d1 * d2);
-                    var inputDim = input.Output.Shape[0];
-                    var scale = new Parameter(new[] { targetDim, inputDim }, input.Output.DataType, CNTKLib.UniformInitializer(CNTKLib.DefaultParamInitScale), _device);
-                    var scaled = CNTKLib.Times(scale, input);
-
-                    var reshaped = CNTKLib.Reshape(scaled, Model.Output.Shape);
-                    Model = CNTKLib.Plus(reshaped, Model);
-                }
-                else // [3x4x2] => [4x5x1] || [3x1] => [5x7x8x1]
-                {
-                    var inputDim = input.Output.Shape.Dimensions.Aggregate((d1, d2) => d1 * d2);
-                    var inputVector = CNTKLib.Reshape(input, new[] { inputDim });
-
-                    var targetDim = Model.Output.Shape.Dimensions.Aggregate((d1, d2) => d1 * d2);
-                    var scale = new Parameter(new[] { targetDim, inputDim }, input.Output.DataType, CNTKLib.UniformInitializer(CNTKLib.DefaultParamInitScale), _device);
-                    var scaled = CNTKLib.Times(scale, inputVector);
-
-                    var reshaped = CNTKLib.Reshape(scaled, Model.Output.Shape);
-                    Model = CNTKLib.Plus(reshaped, Model);
-                }
-                _architectureDescription += $"-ShortOut({nameShortcutConnection})";
+                _branches[branch].Model = layer.Create(branchOutput.Model, _device);
+                _branches[branch].ArchitectureDescription += $"-{layer.GetDescription()}";                
+            }
+            else
+            {
+                throw new ArgumentException($"Ветви с именем '{branch}' не существует.", nameof(branch));
             }
         }
         /// <summary>
-        /// Сконфигурированная модель CNTK
+        /// Разбивает основную последовательность слоев на несколько ветвей
         /// </summary>
-        public Function Model { get; private set; }
+        /// <param name="branchNames">Названия ветвей, каждой ветви в порядке перечисления будет сопоставлен соответсвующий выход сети. Названия должны быть уникальны.</param>
+        public void SplitToBranches(params string[] branchNames)
+        {
+            if (_isCompiled)
+                throw new NotSupportedException("Изменение скомпилированной модели не поддерживается.");
+            if (_branches.Count != 0)
+                throw new NotSupportedException("Повторное разбиение сущеcтвующих ветвей на новые ветви не поддерживается.");
+            if (branchNames.Length < 2)
+                throw new NotSupportedException("Разбиение возможно минимум на 2 ветви.");
+            _branches = branchNames
+                .Select((branch, index) => (branch, index, _model))
+                .ToDictionary(p => p.branch, q => new Branch()
+                {
+                    Index = q.index,
+                    Name = q.branch,
+                    ArchitectureDescription = $"-#{q.branch}",
+                    Model = _model
+                });                      
+        }
+        /// <summary>
+        /// Компилирует все созданные ветви в одну модель
+        /// </summary>
+        public void Compile()
+        {
+            var outputs = _branches
+                .Values
+                .OrderBy(p => p.Index)
+                .Select(p => (Variable)p.Model)
+                .ToList();
+            _model = CNTKLib.Combine(new VariableVector(outputs));
+            
+            _isCompiled = true;
+        }
+
+        public void Dispose()
+        {
+            _device.Dispose();
+            _model.Dispose();
+            foreach (var item in _branches.Values)
+            {
+                item.Model.Dispose();
+            }
+        }
+        /// <summary>
+        /// Скомпилированная модель CNTK
+        /// </summary>
+        public Function Model
+        {
+            get
+            {
+                if (!_isCompiled)
+                    throw new NotSupportedException("Использование нескомпилированной модели не поддерживается. Скомпилируйте вызвав Compile()");
+                return _model;
+            }
+        }
+        public override string ToString()
+        {
+            return getArchitectureDescription();
+        }
         /// <summary>
         /// Сохраняет модель в файл.
         /// </summary>
@@ -206,21 +242,5 @@ namespace EasyCNTK
                 }
             }
         }
-
-        public override string ToString()
-        {
-            return getArchitectureDescription();
-        }
-
-        public void Dispose()
-        {
-            Model.Dispose();
-            _device.Dispose();
-            foreach (var shortcut in _shortcutConnectionInputs.Values)
-            {
-                shortcut.Dispose();
-            }
-        }
     }
 }
-

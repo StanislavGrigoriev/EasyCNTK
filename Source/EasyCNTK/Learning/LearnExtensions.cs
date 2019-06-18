@@ -36,6 +36,125 @@ namespace EasyCNTK.Learning
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
+        private static FitResult[] FitMultiOutput(this Function source,
+           Func<int, IEnumerable<MinibatchMultiOutput>> trainDataSelector,
+           Loss[] lossFunctions,
+           Loss[] evaluationFunctions,
+           Optimizer[] optimizers,
+           int epochCount,
+           bool isReccurentModel,
+           DeviceDescriptor device,
+           Func<int, double[], double[]> ruleUpdateLearningRate = null,
+           Func<int, double[], double[], bool> actionPerEpoch = null)
+        {
+            int headCount = trainDataSelector(1).FirstOrDefault().Labels.Length;
+
+            if (headCount != lossFunctions.Length) throw new ArgumentOutOfRangeException(nameof(lossFunctions), "Количество функций потерь не совпадает с количеством выходных голов модели.");
+            if (headCount != evaluationFunctions.Length) throw new ArgumentOutOfRangeException(nameof(evaluationFunctions), "Количество оценочных функций не совпадает с количеством выходных голов модели.");
+            if (headCount != optimizers.Length) throw new ArgumentOutOfRangeException(nameof(optimizers), "Количество оптимизаторов не совпадает с количеством выходных голов модели.");
+            
+            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");
+
+            var outputVariables = new Function[headCount];
+            var losses = new Function[headCount];
+            var evaluations = new Function[headCount];
+            var learners = new Learner[headCount];
+            var trainers = new Trainer[headCount];
+            var learningRates = new double[headCount];
+
+            for (int i = 0; i < headCount; i++)
+            {
+                var outputVariable = isReccurentModel 
+                    ? Variable.InputVariable(source.Outputs[i].Shape, source.Outputs[i].DataType, "output", new List<Axis> { Axis.DefaultBatchAxis() })
+                    : Variable.InputVariable(source.Outputs[i].Shape, source.Outputs[i].DataType, "output");
+                var loss       = lossFunctions[i].GetLoss(source.Outputs[i], outputVariable, device);
+                var evaluation = evaluationFunctions[i].GetLoss(source.Outputs[i], outputVariable, device);
+                var learner    = optimizers[i].GetOptimizer(source.Outputs[i].ToFunction().Parameters());
+                var trainer = CNTKLib.CreateTrainer(
+                        source.Outputs[i],
+                        loss,
+                        evaluation,
+                        new LearnerVector() { learner });
+
+                outputVariables[i] = outputVariable;
+                losses[i]          = loss;
+                evaluations[i]     = evaluation;
+                learners[i]        = learner;
+                learningRates[i]   = optimizers[i].LearningRate;
+                trainers[i]        = trainer;                
+            }
+            
+            var factLosses = new List<double[]>(epochCount);
+            var factEvals = new List<double[]>(epochCount);
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            for (int i = 1; i <= epochCount; i++)
+            {
+                var trainMinibatches = trainDataSelector(i);
+                foreach (var miniBatch in trainMinibatches)
+                {
+                    for (int j = 0; j < headCount; j++)
+                    {
+                        trainers[j].TrainMinibatch(new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features }, { outputVariables[j], miniBatch.Labels[j] } }, false, device);
+                    }
+                }
+                factLosses.Add(trainers.Select(p => p.PreviousMinibatchLossAverage()).ToArray());
+                factEvals.Add(trainers.Select(p => p.PreviousMinibatchEvaluationAverage()).ToArray());
+
+                bool needStopTraining = actionPerEpoch?.Invoke(i, factLosses[i - 1], factEvals [i - 1]) ?? false;
+                if (needStopTraining)
+                {
+                    epochCount = i;
+                    break;
+                }
+
+                if (ruleUpdateLearningRate != null)
+                {
+                    var proposaledLearningRate = ruleUpdateLearningRate(i, learningRates);
+                    if (proposaledLearningRate.Length != headCount)
+                        throw new ArgumentOutOfRangeException(nameof(ruleUpdateLearningRate), "Количество обновляемых скоростей обучения не соответсвует количеству выходных голов модели.");
+                    for (int j = 0; j < headCount; j++)
+                    {
+                        if (proposaledLearningRate[j] != learningRates[j])
+                        {
+                            learners[j].SetLearningRateSchedule(new TrainingParameterScheduleDouble(learningRates[j]));
+                            learningRates[j] = proposaledLearningRate[j];
+                        }
+                    }
+                }
+            }
+            sw.Stop();
+
+            return Enumerable.Range(0, headCount)
+                .Select((indexHead, p) => new FitResult
+                {
+                    LossError = factLosses[factLosses.Count - 1][indexHead],
+                    EvaluationError = factEvals[factEvals.Count - 1][indexHead],
+                    Duration = sw.Elapsed,
+                    EpochCount = epochCount,
+                    LossCurve = factLosses.Select(q => q[indexHead]).ToList(),
+                    EvaluationCurve = factEvals.Select(q => q[indexHead]).ToList()
+                })
+                .ToArray();                
+        }
+        
+        [Obsolete("Используйте методы расширения для моделей Sequential<T>")]
+        /// <summary>
+        /// Обучает модель. Поддерживает реккурентные сети.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="trainDataSelector">Селектор, позволяющий указать для каждой эпохи свой набор данных для обучения.</param>
+        /// <param name="lossFunction">Функция потерь</param>
+        /// <param name="evaluationFunction">Оценочная функция</param>
+        /// <param name="optimizer">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>
+        /// <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+        /// <param name="device">Устройство для обучения</param>
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
         public static FitResult Fit(this Function source,
            Func<int, IEnumerable<Minibatch>> trainDataSelector,
            Loss lossFunction,
@@ -103,7 +222,7 @@ namespace EasyCNTK.Learning
                 EvaluationCurve = evals
             };
         }
-
+        [Obsolete("Используйте методы расширения для моделей Sequential<T>")]
         /// <summary>
         /// Обучает модель. Поддерживает реккурентные сети.
         /// </summary>
@@ -133,6 +252,7 @@ namespace EasyCNTK.Learning
         {
             return source.Fit(p => trainData, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
         }
+        [Obsolete("Используйте методы расширения для моделей Sequential<T>")]
         /// <summary>
         /// Обучает модель. Не применим для обучения реккуретных сетей.
         /// </summary>
@@ -166,23 +286,24 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
+            DataConverter valueConverter = new DataConverter(device);
             IList<Minibatch> minibatches = null;
             if (!shuffleSampleInMinibatchesPerEpoch)
             {
-                minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize, device).ToArray();
+                minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize).ToArray();
             }
             Func<int, IEnumerable<Minibatch>> getMinibatches = epoch =>
             {
                 if (shuffleSampleInMinibatchesPerEpoch)
                 {
                     trainData.Shuffle();
-                    minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize, device).ToArray();
+                    minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize).ToArray();
                 }
                 return minibatches;
             };
             return source.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
         }
+        [Obsolete("Используйте методы расширения для моделей Sequential<T>")]
         /// <summary>
         /// Обучает реккурентную модель.
         /// </summary>
@@ -217,11 +338,11 @@ namespace EasyCNTK.Learning
         {
             if (features.Count != labels.Count) throw new ArgumentException("Количество поледовательностей(features) и меток(labels) должно быть одинаковым.");
 
-            DataConverter valueConverter = new DataConverter();
+            DataConverter valueConverter = new DataConverter(device);
             IList<Minibatch> minibatches = null;
             if (!shuffleSampleInMinibatchesPerEpoch)
             {
-                minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize, device).ToArray();
+                minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize).ToArray();
             }
             var trainData = features.Zip(labels, (f, l) => (f, l)).ToArray();
             Func<int, IEnumerable<Minibatch>> getMinibatches = epoch =>
@@ -229,19 +350,20 @@ namespace EasyCNTK.Learning
                 if (shuffleSampleInMinibatchesPerEpoch)
                 {
                     trainData.Shuffle();
-                    minibatches = valueConverter.ConvertDatasetToMinibatch(trainData.Select(p => p.f), trainData.Select(p => p.l), minibatchSize, device).ToArray();
+                    minibatches = valueConverter.ConvertDatasetToMinibatch(trainData.Select(p => p.f), trainData.Select(p => p.l), minibatchSize).ToArray();
                 }
                 return minibatches;
             };
 
             return source.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch);
         }
+        [Obsolete("Используйте методы расширения для моделей Sequential<T>")]
         /// <summary>
         /// Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
-        /// <param name="trainData">Набор данных для обучения.</param>
+        /// <param name="features">Набор данных для обучения.</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunction">Функция потерь</param>
         /// <param name="evaluationFunction">Оценочная функция</param>
@@ -255,7 +377,8 @@ namespace EasyCNTK.Learning
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Function source,
-            IList<Sample2D<T>> trainData,
+            IList<T[,]> features,            
+            IList<T[]> labels,
             int minibatchSize,
             Loss lossFunction,
             Loss evaluationFunction,
@@ -266,23 +389,25 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
+            DataConverter valueConverter = new DataConverter(device);
             IList<Minibatch> minibatches = null;
             if (!shuffleSampleInMinibatchesPerEpoch)
             {
-                minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, minibatchSize, device).ToArray();
+                minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize).ToArray();
             }
+            var trainData = features.Zip(labels, (f, l) => (f, l)).ToArray();
             Func<int, IEnumerable<Minibatch>> getMinibatches = epoch =>
             {
                 if (shuffleSampleInMinibatchesPerEpoch)
                 {
                     trainData.Shuffle();
-                    minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, minibatchSize, device).ToArray();
+                    minibatches = valueConverter.ConvertDatasetToMinibatch(trainData.Select(p => p.f), trainData.Select(p => p.l), minibatchSize).ToArray();
                 }
                 return minibatches;
             };
             return source.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
         }
+        [Obsolete("Используйте методы расширения для моделей Sequential<T>")]
         /// <summary>
         /// Обучает модель. Не применим для обучения реккуретных сетей.
         /// </summary>
@@ -314,10 +439,11 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize);
             return source.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
         }
+        [Obsolete("Используйте методы расширения для моделей Sequential<T>")]
         /// <summary>
         /// Обучает реккурентную модель.
         /// </summary>
@@ -348,16 +474,17 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize);
             return source.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch);
         }
+        [Obsolete("Используйте методы расширения для моделей Sequential<T>")]
         /// <summary>
         /// Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
-        /// <param name="trainData">Набор данных для обучения.</param>
+        /// <param name="features">Набор данных для обучения.</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunction">Функция потерь</param>
         /// <param name="evaluationFunction">Оценочная функция</param>
@@ -370,7 +497,8 @@ namespace EasyCNTK.Learning
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Function source,
-            IEnumerable<Sample2D<T>> trainData,
+            IEnumerable<T[,]> features,
+            IEnumerable<T[]> labels,
             int minibatchSize,
             Loss lossFunction,
             Loss evaluationFunction,
@@ -380,8 +508,8 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            DataConverter valueConverter = new DataConverter();
-            var minibatches = valueConverter.ConvertDatasetToMinibatch(trainData, minibatchSize, device);
+            DataConverter valueConverter = new DataConverter(device);
+            var minibatches = valueConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize);
             return source.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
         }
         #endregion
@@ -519,7 +647,7 @@ namespace EasyCNTK.Learning
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
-        /// <param name="trainData">Набор данных для обучения.</param>
+        /// <param name="features">Набор данных для обучения.</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunction">Функция потерь</param>
         /// <param name="evaluationFunction">Оценочная функция</param>
@@ -533,7 +661,8 @@ namespace EasyCNTK.Learning
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
-            IList<Sample2D<T>> trainData,
+            IList<T[,]> features,
+            IList<T[]> labels,
             int minibatchSize,
             Loss lossFunction,
             Loss evaluationFunction,
@@ -544,7 +673,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, shuffleSampleInMinibatchesPerEpoch, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(features, labels, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, shuffleSampleInMinibatchesPerEpoch, ruleUpdateLearningRate, actionPerEpoch);
         }
         /// <summary>
         /// Обучает модель. Не применим для обучения реккуретных сетей.
@@ -616,7 +745,7 @@ namespace EasyCNTK.Learning
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
-        /// <param name="trainData">Набор данных для обучения.</param>
+        /// <param name="features">Набор данных для обучения.</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunction">Функция потерь</param>
         /// <param name="evaluationFunction">Оценочная функция</param>
@@ -629,7 +758,8 @@ namespace EasyCNTK.Learning
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
-            IEnumerable<Sample2D<T>> trainData,
+            IEnumerable<T[,]> features,
+            IEnumerable<T[]> labels,
             int minibatchSize,
             Loss lossFunction,
             Loss evaluationFunction,
@@ -639,7 +769,7 @@ namespace EasyCNTK.Learning
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
-            return source.Model.Fit(trainData, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(features, labels, minibatchSize, lossFunction, evaluationFunction, optimizer, epochCount, device, ruleUpdateLearningRate, actionPerEpoch);
         }
         #endregion
 
