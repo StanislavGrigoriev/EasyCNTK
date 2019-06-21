@@ -20,5 +20,6 @@ namespace EasyCNTK.Learning.Optimizers
     {
         public abstract double LearningRate { get; }
         public abstract Learner GetOptimizer(IList<Parameter> learningParameters);
+        public abstract int MinibatchSize { get; set; }
     }
 }
