@@ -22,17 +22,18 @@ namespace EasyCNTK.Learning.Optimizers
         private double _l1RegularizationWeight;
         private double _l2RegularizationWeight;
         private double _gradientClippingThresholdPerSample;
-        private int _minibatchSize;
         private double _momentum;
         private double _varianceMomentumSchedule;
         private bool _unitGain;
         public override double LearningRate { get; }
+        public override int MinibatchSize { get; set; }
+
         /// <summary>
         /// Инициализирует оптимизатор FSAdaGrad
         /// </summary>
         /// <param name="learningRate">Скорость обучения</param>
         /// <param name="momentum">Момент</param>
-        /// <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения</param>
+        /// <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
         /// <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
         /// <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
         /// <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
@@ -41,7 +42,7 @@ namespace EasyCNTK.Learning.Optimizers
         /// <param name="unitGain">Указывает, что момент используется в режиме усиления</param>   
         public FSAdaGrad(double learningRate,
             double momentum,
-            int minibatchSize,
+            int minibatchSize = 0,
             double l1RegularizationWeight = 0,
             double l2RegularizationWeight = 0,
             double gradientClippingThresholdPerSample = double.PositiveInfinity,            
@@ -55,7 +56,7 @@ namespace EasyCNTK.Learning.Optimizers
             _gradientClippingThresholdPerSample = gradientClippingThresholdPerSample;            
             _varianceMomentumSchedule = varianceMomentumSchedule;
             _unitGain = unitGain;
-            _minibatchSize = minibatchSize;
+            MinibatchSize = minibatchSize;
         }
         public override Learner GetOptimizer(IList<Parameter> learningParameters)
         {
@@ -67,10 +68,10 @@ namespace EasyCNTK.Learning.Optimizers
                 gradientClippingThresholdPerSample = _gradientClippingThresholdPerSample
             };
             return CNTKLib.FSAdaGradLearner(new ParameterVector((ICollection)learningParameters),
-                new TrainingParameterScheduleDouble(LearningRate, (uint)_minibatchSize),
-                new TrainingParameterScheduleDouble(_momentum, (uint)_minibatchSize),
+                new TrainingParameterScheduleDouble(LearningRate, (uint)MinibatchSize),
+                new TrainingParameterScheduleDouble(_momentum, (uint)MinibatchSize),
                 _unitGain,
-                new TrainingParameterScheduleDouble(_varianceMomentumSchedule, (uint)_minibatchSize),
+                new TrainingParameterScheduleDouble(_varianceMomentumSchedule, (uint)MinibatchSize),
                 learningOptions);
         }
     }

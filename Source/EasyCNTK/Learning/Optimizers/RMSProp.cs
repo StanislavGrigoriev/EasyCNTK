@@ -21,18 +21,19 @@ namespace EasyCNTK.Learning.Optimizers
         private double _l1RegularizationWeight;
         private double _l2RegularizationWeight;
         private double _gradientClippingThresholdPerSample;
-        private int _minibatchSize;
         private double _gamma;
         private double _inc;
         private double _dec;
         private double _max;
         private double _min;
         public override double LearningRate { get; }
+        public override int MinibatchSize { get; set; }
+
         /// <summary>
         /// Инициализирует оптимизатор RMSProp 
         /// </summary>
         /// <param name="learningRate">Скорость обучения</param>
-        /// <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения</param>
+        /// <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
         /// <param name="gamma">Коэффициент передачи для предыдущего градиента. Должен быть в пределах [0;1]</param>
         /// <param name="increment">Коэффициент увеличения скорости обучения. Должен быть больше 1. По умолчанию увеличение на 5%</param>
         /// <param name="decrement">Коэффициент уменьшения скорости обучения. Должен быть в пределах [0;1]. По умолчанию уменьшение на 5%</param>
@@ -43,7 +44,7 @@ namespace EasyCNTK.Learning.Optimizers
         /// <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
         /// По умолчанию установлен в <seealso cref="double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>
         public RMSProp(double learningRate,
-            int minibatchSize,
+            int minibatchSize = 0,
             double gamma = 0.95,
             double increment = 1.05,
             double decrement = 0.95,
@@ -59,7 +60,7 @@ namespace EasyCNTK.Learning.Optimizers
             _dec = decrement;
             _max = max;
             _min = min;
-            _minibatchSize = minibatchSize;
+            MinibatchSize = minibatchSize;
             _l1RegularizationWeight = l1RegularizationWeight;
             _l2RegularizationWeight = l2RegularizationWeight;
             _gradientClippingThresholdPerSample = gradientClippingThresholdPerSample;
@@ -74,7 +75,7 @@ namespace EasyCNTK.Learning.Optimizers
                 gradientClippingThresholdPerSample = _gradientClippingThresholdPerSample
             };
             return CNTKLib.RMSPropLearner(new ParameterVector((ICollection)learningParameters),
-                new TrainingParameterScheduleDouble(LearningRate, (uint)_minibatchSize),
+                new TrainingParameterScheduleDouble(LearningRate, (uint)MinibatchSize),
                 _gamma,
                 _inc,
                 _dec,
