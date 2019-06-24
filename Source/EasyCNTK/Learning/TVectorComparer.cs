@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace EasyCNTK.Learning
@@ -15,12 +17,19 @@ namespace EasyCNTK.Learning
 
         public bool Equals(T[] x, T[] y)
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < x.Length; i++)
+            {
+                if (DoubleComparer.Compare(x[i].ToDouble(CultureInfo.InvariantCulture), y[i].ToDouble(CultureInfo.InvariantCulture)) != 0)
+                    return false;
+            }
+            return true;
         }
 
         public int GetHashCode(T[] obj)
         {
-            throw new NotImplementedException();
+            return obj
+                .Select((p, i) => p.GetHashCode() ^ i)
+                .Aggregate((a, b) => a ^ b);
         }
     }
 }
