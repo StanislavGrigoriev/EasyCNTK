@@ -212,15 +212,50 @@ namespace EasyCNTK
             return getArchitectureDescription();
         }
 
-        public void Dispose()
+        #region IDisposable Support
+        private bool disposedValue = false; // Для определения избыточных вызовов
+
+        void Dispose(bool disposing)
         {
-            Model.Dispose();
-            _device.Dispose();
-            foreach (var shortcut in _shortcutConnectionInputs.Values)
+            if (!disposedValue)
             {
-                shortcut.Dispose();
+                if (disposing)
+                {
+                    // TODO: освободить управляемое состояние (управляемые объекты).
+                    Model.Dispose();
+                    _device.Dispose();
+                    foreach (var shortcut in _shortcutConnectionInputs.Values)
+                    {
+                        shortcut.Dispose();
+                    }
+                }
+
+                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
+                // TODO: задать большим полям значение NULL.
+                Model = null;
+                _device = null;
+                _shortcutConnectionInputs = null;
+                disposedValue = true;
             }
         }
+
+        // TODO: переопределить метод завершения, только если Dispose(bool disposing) выше включает код для освобождения неуправляемых ресурсов.
+        ~Sequential()
+        {
+            // Не изменяйте этот код. Разместите код очистки выше, в методе Dispose(bool disposing).
+            Dispose(false);
+        }
+
+        // Этот код добавлен для правильной реализации шаблона высвобождаемого класса.
+        public void Dispose()
+        {
+            // Не изменяйте этот код. Разместите код очистки выше, в методе Dispose(bool disposing).
+            Dispose(true);
+            // TODO: раскомментировать следующую строку, если метод завершения переопределен выше.
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+
     }
 }
 

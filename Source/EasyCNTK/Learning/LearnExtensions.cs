@@ -228,11 +228,13 @@ namespace EasyCNTK.Learning
                 LossCurve = losses,
                 EvaluationCurve = evals
             };
-        }      
+        }
 
         #endregion
 
         #region Extensions for Sequential<T>
+
+        #region One input - onr output
         /// <summary>
         /// Обучает модель. Поддерживает реккурентные сети.
         /// </summary>
@@ -319,8 +321,8 @@ namespace EasyCNTK.Learning
             Loss evaluationFunction,
             Optimizer optimizer,
             int epochCount,
-            DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
+            DeviceDescriptor device,            
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
@@ -341,7 +343,7 @@ namespace EasyCNTK.Learning
             };
             return source.Model.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
         }
-        /// <summary>
+        /// <summary> 
         /// Обучает реккурентную модель.
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
@@ -368,8 +370,8 @@ namespace EasyCNTK.Learning
             Loss evaluationFunction,
             Optimizer optimizer,
             int epochCount,
-            DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
+            DeviceDescriptor device,            
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
@@ -420,8 +422,8 @@ namespace EasyCNTK.Learning
             Loss evaluationFunction,
             Optimizer optimizer,
             int epochCount,
-            DeviceDescriptor device,
             bool shuffleSampleInMinibatchesPerEpoch,
+            DeviceDescriptor device,            
             Func<int, double, double> ruleUpdateLearningRate = null,
             Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
         {
@@ -545,8 +547,335 @@ namespace EasyCNTK.Learning
         {
             DataConverter dataConverter = new DataConverter(device);
             var minibatches = dataConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize);
-            return source.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
         }
+        #endregion
+
+
+        #region One input - multi output
+        /// <summary>
+        /// Обучает модель. Поддерживает реккурентные сети.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="trainDataSelector">Селектор, позволяющий указать для каждой эпохи свой набор данных для обучения.</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>
+        /// <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+        /// <param name="device">Устройство для обучения</param>
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
+        public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
+           Func<int, IEnumerable<MinibatchMultiOutput>> trainDataSelector,
+           Loss[] lossFunctions,
+           Loss[] evaluationFunctions,
+           Optimizer[] optimizers,
+           int epochCount,
+           bool isReccurentModel,
+           DeviceDescriptor device,
+           Func<int, double[], double[]> ruleUpdateLearningRate = null,
+           Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+        {
+            return source.Model.FitMultiOutput(trainDataSelector, lossFunctions, evaluationFunctions, optimizers, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
+        }
+        /// <summary>
+        /// Обучает модель. Поддерживает реккурентные сети.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="trainData">Набор данных для обучения.</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>
+        /// <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+        /// <param name="device">Устройство для обучения</param>
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
+        public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
+            IEnumerable<MinibatchMultiOutput> trainData,
+            Loss[] lossFunctions,
+            Loss[] evaluationFunctions,
+            Optimizer[] optimizers,
+            int epochCount,
+            DeviceDescriptor device,
+            bool isReccurentModel = false,
+            Func<int, double[], double[]> ruleUpdateLearningRate = null,
+            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+        {
+            return source.Model.FitMultiOutput(p => trainData, lossFunctions, evaluationFunctions, optimizers, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
+        }
+        /// <summary>
+        /// Обучает модель. Не применим для обучения реккуретных сетей.
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="features">Набор данных для обучения. Каждый пример должен содержать в начале массива признаки размерностью inputDim, а в конце метки классов размерностью outputDim.
+        /// Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
+        /// <param name="inputDim">Размерность признаков (разрядность)</param>
+        /// <param name="minibatchSize">Размер минипакета</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>        
+        /// <param name="device">Устройство для обучения</param>
+        /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
+        public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
+            IList<T[]> features,
+            IList<T[][]> labels,            
+            int minibatchSize,
+            Loss[] lossFunctions,
+            Loss[] evaluationFunctions,
+            Optimizer[] optimizers,
+            int epochCount,
+            bool shuffleSampleInMinibatchesPerEpoch,
+            DeviceDescriptor device,            
+            Func<int, double[], double[]> ruleUpdateLearningRate = null,
+            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+        {
+            DataConverter dataConverter = new DataConverter(device);
+            IList<MinibatchMultiOutput> minibatches = null;
+            if (!shuffleSampleInMinibatchesPerEpoch)
+            {
+                minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize).ToArray();
+            }
+            Func<int, IEnumerable<MinibatchMultiOutput>> getMinibatches = epoch =>
+            {
+                if (shuffleSampleInMinibatchesPerEpoch)
+                {                    
+                    int seed = Environment.TickCount;
+                    features.Shuffle(seed);
+                    labels.Shuffle(seed);
+                    minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize).ToArray();
+                }
+                return minibatches;
+            };
+            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+        }
+        /// <summary> 
+        /// Обучает реккурентную модель.
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+        /// <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
+        /// <param name="minibatchSize">Размер минипакета</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>        
+        /// <param name="device">Устройство для обучения</param>
+        /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
+        public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
+            IList<IList<T[]>> features,
+            IList<T[][]> labels,
+            int minibatchSize,
+            Loss[] lossFunctions,
+            Loss[] evaluationFunctions,
+            Optimizer[] optimizers,
+            int epochCount,
+            bool shuffleSampleInMinibatchesPerEpoch,
+            DeviceDescriptor device,            
+            Func<int, double[], double[]> ruleUpdateLearningRate = null,
+            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+        {
+            if (features.Count != labels.Count) throw new ArgumentException("Количество поледовательностей(features) и меток(labels) должно быть одинаковым.");
+
+            DataConverter dataConverter = new DataConverter(device);
+            IList<MinibatchMultiOutput> minibatches = null;
+            if (!shuffleSampleInMinibatchesPerEpoch)
+            {
+                minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize).ToArray();
+            }            
+            Func<int, IEnumerable<MinibatchMultiOutput>> getMinibatches = epoch =>
+            {
+                if (shuffleSampleInMinibatchesPerEpoch)
+                {
+                    int seed = Environment.TickCount;
+                    features.Shuffle(seed);
+                    labels.Shuffle(seed);
+                    minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize).ToArray();
+                }
+                return minibatches;
+            };
+
+            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch);
+        }
+        /// <summary>
+        /// Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="features">Набор данных для обучения.</param>
+        /// <param name="minibatchSize">Размер минипакета</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>        
+        /// <param name="device">Устройство для обучения</param>  
+        /// <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
+        public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
+            IList<T[,]> features,
+            IList<T[][]> labels,
+            int minibatchSize,
+            Loss[] lossFunctions,
+            Loss[] evaluationFunctions,
+            Optimizer[] optimizers,
+            int epochCount,
+            bool shuffleSampleInMinibatchesPerEpoch,
+            DeviceDescriptor device,            
+            Func<int, double[], double[]> ruleUpdateLearningRate = null,
+            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+        {
+            if (features.Count != labels.Count) throw new ArgumentException("Количество примеров 2D  (features) и меток(labels) должно быть одинаковым.");
+
+            DataConverter dataConverter = new DataConverter(device);
+            IList<MinibatchMultiOutput> minibatches = null;
+            if (!shuffleSampleInMinibatchesPerEpoch)
+            {
+                minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize).ToArray();
+            }
+            var trainData = features.Zip(labels, (f, l) => (f, l)).ToArray();
+            Func<int, IEnumerable<MinibatchMultiOutput>> getMinibatches = epoch =>
+            {
+                if (shuffleSampleInMinibatchesPerEpoch)
+                {
+                    int seed = Environment.TickCount;
+                    features.Shuffle(seed);
+                    labels.Shuffle(seed);
+                    minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize).ToArray();
+                }
+                return minibatches;
+            };
+            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+        }
+        /// <summary>
+        /// Обучает модель. Не применим для обучения реккуретных сетей.
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="trainData">Набор данных для обучения. Каждый пример должен содержать в начале массива признаки размерностью inputDim, а в конце метки классов размерностью outputDim.
+        /// Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
+        /// <param name="inputDim">Размерность признаков (разрядность)</param>
+        /// <param name="minibatchSize">Размер минипакета</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>        
+        /// <param name="device">Устройство для обучения</param>       
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
+        public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
+            IEnumerable<T[]> features,
+            IEnumerable<T[][]> labels,
+            int minibatchSize,
+            Loss[] lossFunctions,
+            Loss[] evaluationFunctions,
+            Optimizer[] optimizers,
+            int epochCount,
+            DeviceDescriptor device,
+            Func<int, double[], double[]> ruleUpdateLearningRate = null,
+            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+        {
+            DataConverter dataConverter = new DataConverter(device);
+            var minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize);
+            return source.Model.FitMultiOutput(p => minibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+        }
+        /// <summary>
+        /// Обучает реккурентную модель.
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+        /// <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
+        /// <param name="minibatchSize">Размер минипакета</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>        
+        /// <param name="device">Устройство для обучения</param>        
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
+        public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
+            IEnumerable<IList<T[]>> features,
+            IEnumerable<T[][]> labels,
+            int minibatchSize,
+            Loss[] lossFunctions,
+            Loss[] evaluationFunctions,
+            Optimizer[] optimizers,
+            int epochCount,
+            DeviceDescriptor device,
+            Func<int, double[], double[]> ruleUpdateLearningRate = null,
+            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+        {
+            DataConverter dataConverter = new DataConverter(device);
+            var minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize);
+            return source.Model.FitMultiOutput(p => minibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch);
+        }
+        /// <summary>
+        /// Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
+        /// </summary>
+        /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
+        /// <param name="source"></param>
+        /// <param name="features">Набор данных для обучения.</param>
+        /// <param name="minibatchSize">Размер минипакета</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
+        /// <param name="epochCount">Количество эпох обучения</param>        
+        /// <param name="device">Устройство для обучения</param>          
+        /// <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+        /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+        /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+        /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <returns></returns>
+        public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
+            IEnumerable<T[,]> features,
+            IEnumerable<T[][]> labels,
+            int minibatchSize,
+            Loss[] lossFunctions,
+            Loss[] evaluationFunctions,
+            Optimizer[] optimizers,
+            int epochCount,
+            DeviceDescriptor device,
+            Func<int, double[], double[]> ruleUpdateLearningRate = null,
+            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+        {
+            DataConverter dataConverter = new DataConverter(device);
+            var minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize);
+            return source.Fit(p => minibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+        } 
+        #endregion
+
+
+
         #endregion
 
     }
