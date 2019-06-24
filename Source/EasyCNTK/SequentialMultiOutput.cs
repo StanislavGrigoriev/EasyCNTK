@@ -198,17 +198,22 @@ namespace EasyCNTK
             _isCompiled = true;
         }
 
-        public void Dispose()
-        {
-            _device.Dispose();
-            _model.Dispose();
-            foreach (var item in _branches.Values)
-            {
-                item.Model.Dispose();
-            }
-        }
+        //private bool _isDisposed = false;
+        //public void Dispose()
+        //{
+        //    if (!_isDisposed)
+        //    {
+        //        _device.Dispose();
+        //        _model.Dispose();
+        //        foreach (var item in _branches.Values)
+        //        {
+        //            item.Model.Dispose();
+        //        }
+        //    }
+        //    _isDisposed = true;
+        //}
         /// <summary>
-        /// Скомпилированная модель CNTK
+        /// Скомпилированная модель CNTK 
         /// </summary>
         public Function Model
         {
@@ -242,5 +247,50 @@ namespace EasyCNTK
                 }
             }
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // Для определения избыточных вызовов
+
+        void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: освободить управляемое состояние (управляемые объекты).
+                    _device.Dispose();
+                    _model.Dispose();
+                    foreach (var item in _branches.Values)
+                    {
+                        item.Model.Dispose();
+                    }
+                }
+
+                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
+                // TODO: задать большим полям значение NULL.
+                _device = null;
+                _model = null;
+                _branches = null;
+
+                disposedValue = true;
+            }
+        }
+
+        // TODO: переопределить метод завершения, только если Dispose(bool disposing) выше включает код для освобождения неуправляемых ресурсов.
+        ~SequentialMultiOutput()
+        {
+            // Не изменяйте этот код. Разместите код очистки выше, в методе Dispose(bool disposing).
+            Dispose(false);
+        }
+
+        // Этот код добавлен для правильной реализации шаблона высвобождаемого класса.
+        public void Dispose()
+        {
+            // Не изменяйте этот код. Разместите код очистки выше, в методе Dispose(bool disposing).
+            Dispose(true);
+            // TODO: раскомментировать следующую строку, если метод завершения переопределен выше.
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

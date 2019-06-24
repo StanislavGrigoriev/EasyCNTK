@@ -8,10 +8,9 @@ using System.Text;
 
 namespace EasyCNTK.Learning.Reinforcement
 {
-    public abstract class Agent<T> : IDisposable where T : IConvertible
+    public abstract class AgentTeacher<T> : IDisposable where T : IConvertible
     {
         protected Environment Environment { get; set; }
-        protected Sequential<T> Model { get; set; }
         protected DeviceDescriptor Device { get; set; }
         protected T[] Multiply(T[] vector, T factor)
         {
@@ -25,7 +24,7 @@ namespace EasyCNTK.Learning.Reinforcement
             }
             return result;
         }
-        protected T CalculateDiscountedReward(T[] rewards, double gamma)
+        protected virtual T CalculateDiscountedReward(T[] rewards, double gamma)
         {
             var type = typeof(T);
             double totalReward = rewards[0].ToDouble(CultureInfo.InvariantCulture);
@@ -35,14 +34,13 @@ namespace EasyCNTK.Learning.Reinforcement
             }
             return (T)Convert.ChangeType(totalReward, type);
         }
-        public Func<Loss> GetLoss { get; set; } = () => new SquaredError();
-        public Func<Loss> GetEvalLoss { get; set; } = () => new SquaredError();
-        public Func<int, Optimizer> GetOptimizer { get; set; } = (minibatchSize) => new Adam(0.05, 0.9, minibatchSize);
+        public Func<Loss[]> GetLoss { get; set; } = () => new[] { new SquaredError() };
+        public Func<Loss[]> GetEvalLoss { get; set; } = () => new[] { new SquaredError() };
+        public Func<Optimizer[]> GetOptimizer { get; set; } = () => new Optimizer[] { new Adam(0.05, 0.9) };
 
-        public Agent(Environment environment, Sequential<T> model, DeviceDescriptor device)
+        public AgentTeacher(Environment environment, DeviceDescriptor device)
         {
-            Environment = environment;
-            Model = model;
+            Environment = environment;  
             Device = device;
         }
 
@@ -55,15 +53,13 @@ namespace EasyCNTK.Learning.Reinforcement
             {
                 if (disposing)
                 {
-                    Environment.Dispose();
-                    Model.Dispose();
+                    Environment.Dispose();                    
                     Device.Dispose();
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
                 // TODO: задать большим полям значение NULL.
-                Environment = null;
-                Model = null;
+                Environment = null;               
                 Device = null;
 
                 disposedValue = true;
@@ -71,7 +67,7 @@ namespace EasyCNTK.Learning.Reinforcement
         }
 
         // TODO: переопределить метод завершения, только если Dispose(bool disposing) выше включает код для освобождения неуправляемых ресурсов.
-        ~Agent()
+        ~AgentTeacher()
         {
             // Не изменяйте этот код. Разместите код очистки выше, в методе Dispose(bool disposing).
             Dispose(false);
