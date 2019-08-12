@@ -1,4 +1,11 @@
-﻿using CNTK;
+﻿//
+// Copyright (c) Stanislav Grigoriev. All rights reserved.
+// grigorievstas9@gmail.com 
+// https://github.com/StanislavGrigoriev/EasyCNTK
+//
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//
+using CNTK;
 using EasyCNTK.Learning.Optimizers;
 using EasyCNTK.LossFunctions;
 using System;
@@ -8,6 +15,10 @@ using System.Text;
 
 namespace EasyCNTK.Learning.Reinforcement
 {
+    /// <summary>
+    /// Базовый класс для создания учителей, содержит определение среды и вспомогательные методы для вычисления промежуточных результатов
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class AgentTeacher<T> : IDisposable where T : IConvertible
     {
         protected Environment Environment { get; set; }
@@ -53,8 +64,8 @@ namespace EasyCNTK.Learning.Reinforcement
             {
                 if (disposing)
                 {
-                    Environment.Dispose();                    
-                    Device.Dispose();
+                    //Environment.Dispose();                    
+                    //Device.Dispose();
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
