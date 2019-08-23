@@ -27,7 +27,7 @@ Add comments to some methods</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <DocumentationFile>C:\Users\grigorev_ss\source\repos\EasyCNTK\Source\EasyCNTK\EasyCNTK.xml</DocumentationFile>
+    <DocumentationFile>EasyCNTK.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
