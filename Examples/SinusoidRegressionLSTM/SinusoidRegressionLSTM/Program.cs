@@ -33,7 +33,7 @@ namespace SinusoidRegressionLSTM
             int inputDimension = 1;
             var device = DeviceDescriptor.GPUDevice(0);
 
-            var model = new Sequential<double>(device, new[] { inputDimension });
+            var model = new Sequential<double>(device, new[] { inputDimension }, inputName: "Input");
             model.Add(new LSTM(1, selfStabilizerLayer: new SelfStabilization()));
             model.Add(new Residual2(1, new Tanh()));
 
@@ -65,7 +65,8 @@ namespace SinusoidRegressionLSTM
                         return true;
                     }
                     return false;
-                });
+                }, 
+                inputName: "Input");
 
             Console.WriteLine($"Duration train: {fitResult.Duration}");
             Console.WriteLine($"Epochs: {fitResult.EpochCount}");

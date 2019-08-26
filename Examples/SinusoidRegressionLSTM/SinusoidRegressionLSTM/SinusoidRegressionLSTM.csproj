@@ -28,8 +28,8 @@
     <Reference Include="Cntk.Core.Managed-2.7, Version=2.7.0.0, Culture=neutral, PublicKeyToken=a82c1f3f67b62253, processorArchitecture=AMD64">
       <HintPath>..\packages\CNTK.GPU.2.7.0\lib\netstandard2.0\Cntk.Core.Managed-2.7.dll</HintPath>
     </Reference>
-    <Reference Include="EasyCNTK, Version=0.3.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\EasyCNTK.0.3.0\lib\netstandard2.0\EasyCNTK.dll</HintPath>
+    <Reference Include="EasyCNTK, Version=0.4.1.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\packages\EasyCNTK.0.4.1\lib\netstandard2.0\EasyCNTK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
