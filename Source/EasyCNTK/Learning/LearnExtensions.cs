@@ -25,9 +25,9 @@ namespace EasyCNTK.Learning
         /// </summary>
         /// <param name="source"></param>
         /// <param name="trainDataSelector">Селектор, позволяющий указать для каждой эпохи свой набор данных для обучения.</param>
-        /// <param name="lossFunction">Функция потерь</param>
-        /// <param name="evaluationFunction">Оценочная функция</param>
-        /// <param name="optimizer">Оптимизатор, используемый для обучения</param>
+        /// <param name="lossFunctions">Функция потерь</param>
+        /// <param name="evaluationFunctions">Оценочная функция</param>
+        /// <param name="optimizers">Оптимизатор, используемый для обучения</param>
         /// <param name="epochCount">Количество эпох обучения</param>
         /// <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
         /// <param name="device">Устройство для обучения</param>
@@ -35,6 +35,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         private static FitResult[] FitMultiOutput(this Function source,
            Func<int, IEnumerable<MinibatchMultiOutput>> trainDataSelector,
@@ -45,7 +46,8 @@ namespace EasyCNTK.Learning
            bool isReccurentModel,
            DeviceDescriptor device,
            Func<int, double[], double[]> ruleUpdateLearningRate = null,
-           Func<int, double[], double[], bool> actionPerEpoch = null)
+           Func<int, double[], double[], bool> actionPerEpoch = null,
+           string inputName = "Input")
         {
             var firstMinibatch = trainDataSelector(1).FirstOrDefault();
             int outputCount = firstMinibatch.Labels.Length;           
@@ -53,8 +55,16 @@ namespace EasyCNTK.Learning
             if (outputCount != lossFunctions.Length) throw new ArgumentOutOfRangeException(nameof(lossFunctions), "Количество функций потерь не совпадает с количеством выходных голов модели.");
             if (outputCount != evaluationFunctions.Length) throw new ArgumentOutOfRangeException(nameof(evaluationFunctions), "Количество оценочных функций не совпадает с количеством выходных голов модели.");
             if (outputCount != optimizers.Length) throw new ArgumentOutOfRangeException(nameof(optimizers), "Количество оптимизаторов не совпадает с количеством выходных голов модели.");
-            
-            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");
+
+            Variable inputVariable;
+            try
+            {
+                inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == inputName.ToUpper());
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException("Модель имеет несколько входов с одинаковым именем.", ex);
+            }
 
             var outputVariables = new Function[outputCount];
             var losses = new Function[outputCount];
@@ -63,7 +73,8 @@ namespace EasyCNTK.Learning
             var trainers = new Trainer[outputCount];
             var learningRates = new double[outputCount];
 
-            for (int i = 0; i < outputCount; i++)            {
+            for (int i = 0; i < outputCount; i++)
+            {
 
                 var outputVariable = isReccurentModel 
                     ? Variable.InputVariable(source.Outputs[i].Shape, source.Outputs[i].DataType, "output", new List<Axis> { Axis.DefaultBatchAxis() })
@@ -140,8 +151,8 @@ namespace EasyCNTK.Learning
                     EvaluationCurve = factEvals.Select(q => q[indexOutput]).ToList()
                 })
                 .ToArray();                
-        }        
-       
+        }
+
         /// <summary>
         /// Обучает модель. Поддерживает реккурентные сети.
         /// </summary>
@@ -157,6 +168,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         private static FitResult Fit(this Function source,
            Func<int, IEnumerable<Minibatch>> trainDataSelector,
@@ -167,13 +179,22 @@ namespace EasyCNTK.Learning
            bool isReccurentModel,
            DeviceDescriptor device,
            Func<int, double, double> ruleUpdateLearningRate = null,
-           Func<int, double, double, bool> actionPerEpoch = null)
+           Func<int, double, double, bool> actionPerEpoch = null,
+           string inputName = "Input")
         {            
             optimizer.MinibatchSize = optimizer.MinibatchSize == 0
                 ? trainDataSelector(1).FirstOrDefault().Size
-                : optimizer.MinibatchSize; 
+                : optimizer.MinibatchSize;
 
-            var inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == "INPUT");
+            Variable inputVariable;
+            try
+            {
+                inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == inputName.ToUpper());
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException("Модель имеет несколько входов с одинаковым именем.", ex);
+            }            
             var outputVariable = isReccurentModel ? Variable.InputVariable(source.Output.Shape, source.Output.DataType, "output", new List<Axis> { Axis.DefaultBatchAxis() })
                 : Variable.InputVariable(source.Output.Shape, source.Output.DataType, "output");
 
@@ -250,6 +271,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
            Func<int, IEnumerable<Minibatch>> trainDataSelector,
@@ -260,9 +282,10 @@ namespace EasyCNTK.Learning
            bool isReccurentModel,
            DeviceDescriptor device,
            Func<int, double, double> ruleUpdateLearningRate = null,
-           Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
+           Func<int, double, double, bool> actionPerEpoch = null,
+           string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Fit(trainDataSelector, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(trainDataSelector, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель. Поддерживает реккурентные сети.
@@ -279,6 +302,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
             IEnumerable<Minibatch> trainData,
@@ -289,9 +313,10 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool isReccurentModel = false,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double, double, bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Fit(p => trainData, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(p => trainData, lossFunction, evaluationFunction, optimizer, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель. Не применим для обучения реккуретных сетей.
@@ -312,6 +337,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
             IList<T[]> trainData,
@@ -324,7 +350,8 @@ namespace EasyCNTK.Learning
             bool shuffleSampleInMinibatchesPerEpoch,
             DeviceDescriptor device,            
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double, double, bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             IList<Minibatch> minibatches = null;
@@ -341,7 +368,7 @@ namespace EasyCNTK.Learning
                 }
                 return minibatches;
             };
-            return source.Model.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary> 
         /// Обучает реккурентную модель.
@@ -361,6 +388,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
             IList<IList<T[]>> features,
@@ -373,7 +401,8 @@ namespace EasyCNTK.Learning
             bool shuffleSampleInMinibatchesPerEpoch,
             DeviceDescriptor device,            
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double, double, bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             if (features.Count != labels.Count) throw new ArgumentException("Количество поледовательностей(features) и меток(labels) должно быть одинаковым.");
 
@@ -394,7 +423,7 @@ namespace EasyCNTK.Learning
                 return minibatches;
             };
 
-            return source.Model.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
@@ -413,6 +442,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
             IList<T[,]> features,
@@ -425,7 +455,8 @@ namespace EasyCNTK.Learning
             bool shuffleSampleInMinibatchesPerEpoch,
             DeviceDescriptor device,            
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double, double, bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             if (features.Count != labels.Count) throw new ArgumentException("Количество примеров 2D  (features) и меток(labels) должно быть одинаковым.");
 
@@ -445,7 +476,7 @@ namespace EasyCNTK.Learning
                 }
                 return minibatches;
             };
-            return source.Model.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(getMinibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель. Не применим для обучения реккуретных сетей.
@@ -465,6 +496,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
             IEnumerable<T[]> trainData,
@@ -476,11 +508,12 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double, double, bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var minibatches = dataConverter.ConvertDatasetToMinibatch(trainData, inputDim, minibatchSize);
-            return source.Model.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает реккурентную модель.
@@ -499,6 +532,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
             IEnumerable<IList<T[]>> features,
@@ -532,6 +566,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
             IEnumerable<T[,]> features,
@@ -543,11 +578,12 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double, double> ruleUpdateLearningRate = null,
-            Func<int, double, double, bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double, double, bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var minibatches = dataConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize);
-            return source.Model.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.Fit(p => minibatches, lossFunction, evaluationFunction, optimizer, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         #endregion
 
@@ -568,6 +604,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
            Func<int, IEnumerable<MinibatchMultiOutput>> trainDataSelector,
@@ -578,9 +615,10 @@ namespace EasyCNTK.Learning
            bool isReccurentModel,
            DeviceDescriptor device,
            Func<int, double[], double[]> ruleUpdateLearningRate = null,
-           Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+           Func<int, double[], double[], bool> actionPerEpoch = null,
+           string inputName = "Input") where T : IConvertible
         {
-            return source.Model.FitMultiOutput(trainDataSelector, lossFunctions, evaluationFunctions, optimizers, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.FitMultiOutput(trainDataSelector, lossFunctions, evaluationFunctions, optimizers, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель. Поддерживает реккурентные сети.
@@ -597,6 +635,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
             IEnumerable<MinibatchMultiOutput> trainData,
@@ -607,18 +646,18 @@ namespace EasyCNTK.Learning
             DeviceDescriptor device,
             bool isReccurentModel = false,
             Func<int, double[], double[]> ruleUpdateLearningRate = null,
-            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double[], double[], bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.FitMultiOutput(p => trainData, lossFunctions, evaluationFunctions, optimizers, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.FitMultiOutput(p => trainData, lossFunctions, evaluationFunctions, optimizers, epochCount, isReccurentModel, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель. Не применим для обучения реккуретных сетей.
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
-        /// <param name="features">Набор данных для обучения. Каждый пример должен содержать в начале массива признаки размерностью inputDim, а в конце метки классов размерностью outputDim.
-        /// Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
-        /// <param name="inputDim">Размерность признаков (разрядность)</param>
+        /// <param name="features">Набор данных для обучения.</param>       
+        /// <param name="labels">Набор меток для каждой головы(выхода сети).</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunctions">Функция потерь</param>
         /// <param name="evaluationFunctions">Оценочная функция</param>
@@ -630,6 +669,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
             IList<T[]> features,
@@ -642,7 +682,8 @@ namespace EasyCNTK.Learning
             bool shuffleSampleInMinibatchesPerEpoch,
             DeviceDescriptor device,            
             Func<int, double[], double[]> ruleUpdateLearningRate = null,
-            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double[], double[], bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             IList<MinibatchMultiOutput> minibatches = null;
@@ -661,7 +702,7 @@ namespace EasyCNTK.Learning
                 }
                 return minibatches;
             };
-            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary> 
         /// Обучает реккурентную модель.
@@ -669,7 +710,7 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
-        /// <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
+        /// <param name="labels">Набор меток для каждой головы(выхода сети).</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunctions">Функция потерь</param>
         /// <param name="evaluationFunctions">Оценочная функция</param>
@@ -681,6 +722,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
             IList<IList<T[]>> features,
@@ -693,7 +735,8 @@ namespace EasyCNTK.Learning
             bool shuffleSampleInMinibatchesPerEpoch,
             DeviceDescriptor device,            
             Func<int, double[], double[]> ruleUpdateLearningRate = null,
-            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double[], double[], bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             if (features.Count != labels.Count) throw new ArgumentException("Количество поледовательностей(features) и меток(labels) должно быть одинаковым.");
 
@@ -715,7 +758,7 @@ namespace EasyCNTK.Learning
                 return minibatches;
             };
 
-            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
@@ -723,6 +766,7 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="features">Набор данных для обучения.</param>
+        /// <param name="labels">Набор меток для каждой головы(выхода сети).</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunctions">Функция потерь</param>
         /// <param name="evaluationFunctions">Оценочная функция</param>
@@ -734,6 +778,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
             IList<T[,]> features,
@@ -746,7 +791,8 @@ namespace EasyCNTK.Learning
             bool shuffleSampleInMinibatchesPerEpoch,
             DeviceDescriptor device,            
             Func<int, double[], double[]> ruleUpdateLearningRate = null,
-            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double[], double[], bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             if (features.Count != labels.Count) throw new ArgumentException("Количество примеров 2D  (features) и меток(labels) должно быть одинаковым.");
 
@@ -768,16 +814,15 @@ namespace EasyCNTK.Learning
                 }
                 return minibatches;
             };
-            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.FitMultiOutput(getMinibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель. Не применим для обучения реккуретных сетей.
         /// </summary>
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
-        /// <param name="source"></param>
-        /// <param name="trainData">Набор данных для обучения. Каждый пример должен содержать в начале массива признаки размерностью inputDim, а в конце метки классов размерностью outputDim.
-        /// Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
-        /// <param name="inputDim">Размерность признаков (разрядность)</param>
+        /// <param name="source"></param>       
+        ///<param name="features">Набор данных для обучения.</param>
+        ///<param name="labels">Набор меток для каждой головы(выхода сети).</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunctions">Функция потерь</param>
         /// <param name="evaluationFunctions">Оценочная функция</param>
@@ -788,6 +833,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
             IEnumerable<T[]> features,
@@ -799,11 +845,12 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double[], double[]> ruleUpdateLearningRate = null,
-            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double[], double[], bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize);
-            return source.Model.FitMultiOutput(p => minibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.FitMultiOutput(p => minibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, false, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает реккурентную модель.
@@ -811,7 +858,7 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
-        /// <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
+        /// <param name="labels">Набор меток для каждой головы(выхода сети).</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunctions">Функция потерь</param>
         /// <param name="evaluationFunctions">Оценочная функция</param>
@@ -822,6 +869,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
             IEnumerable<IList<T[]>> features,
@@ -833,11 +881,12 @@ namespace EasyCNTK.Learning
             int epochCount,
             DeviceDescriptor device,
             Func<int, double[], double[]> ruleUpdateLearningRate = null,
-            Func<int, double[], double[], bool> actionPerEpoch = null) where T : IConvertible
+            Func<int, double[], double[], bool> actionPerEpoch = null,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var minibatches = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize);
-            return source.Model.FitMultiOutput(p => minibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch);
+            return source.Model.FitMultiOutput(p => minibatches, lossFunctions, evaluationFunctions, optimizers, epochCount, true, device, ruleUpdateLearningRate, actionPerEpoch, inputName);
         }
         /// <summary>
         /// Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
@@ -845,6 +894,7 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="features">Набор данных для обучения.</param>
+        /// <param name="labels">Набор меток для каждой головы(выхода сети).</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <param name="lossFunctions">Функция потерь</param>
         /// <param name="evaluationFunctions">Оценочная функция</param>
@@ -855,6 +905,7 @@ namespace EasyCNTK.Learning
         /// <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
         /// Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
         /// Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
             IEnumerable<T[,]> features,

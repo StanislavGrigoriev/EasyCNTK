@@ -288,12 +288,22 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="testData">Тестовые данные. Каждый минипакет должен содержать 1 тестовый пример.</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         private static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Function source,
             IEnumerable<Minibatch> testData,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            string inputName) where T : IConvertible
         {
-            var inputVariable = source.Inputs.Single();
+            Variable inputVariable;
+            try
+            {
+                inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == inputName.ToUpper());
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException("Модель имеет несколько входов с одинаковым именем.", ex);
+            }               
             foreach (var miniBatch in testData)
             {
                 var inputDataMap = new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features } };
@@ -313,9 +323,18 @@ namespace EasyCNTK.Learning
         }
         private static IEnumerable<EvaluateItem<T>[]> Evaluate<T>(this Function source,
             IEnumerable<MinibatchMultiOutput> testData,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            string inputName) where T : IConvertible
         {
-            var inputVariable = source.Inputs.Single();
+            Variable inputVariable;
+            try
+            {
+                inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == inputName.ToUpper());
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException("Модель имеет несколько входов с одинаковым именем.", ex);
+            }           
             foreach (var miniBatch in testData)
             {
                 var inputDataMap = new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features } };
@@ -354,12 +373,22 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="data">Набор примеров для которых вычисляется выход</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Function source,
            IEnumerable<Value> data,
-           DeviceDescriptor device) where T : IConvertible
+           DeviceDescriptor device,
+           string inputName) where T : IConvertible
         {
-            var inputVariable = source.Inputs.Single();
+            Variable inputVariable;
+            try
+            {
+                inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == inputName.ToUpper());
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException("Модель имеет несколько входов с одинаковым именем.", ex);
+            }           
             foreach (var features in data)
             {
                 var inputDataMap = new Dictionary<Variable, Value>() { { inputVariable, features } };
@@ -382,15 +411,17 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="data">Набор примеров для которых вычисляется выход</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Function source,
             IEnumerable<T[]> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var values = dataConverter.ConvertDataToValue(data, minibatchSize);
-            return source.Predict<T>(values, device);
+            return source.Predict<T>(values, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
@@ -398,15 +429,17 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Function source,
             IEnumerable<IList<T[]>> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var values = dataConverter.ConvertDataToValue(data, minibatchSize);
-            return source.Predict<T>(values, device);
+            return source.Predict<T>(values, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
@@ -414,15 +447,17 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Function source,
             IEnumerable<T[,]> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var values = dataConverter.ConvertDataToValue(data, minibatchSize);
-            return source.Predict<T>(values, device);
+            return source.Predict<T>(values, device, inputName);
         }
 
         /// <summary>
@@ -431,10 +466,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Function source, Value data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Function source, Value data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+            return source.Predict<T>(Enumerable.Repeat(data, 1), device, inputName).FirstOrDefault();
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
@@ -442,10 +478,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Function source, T[] data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Function source, T[] data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+            return source.Predict<T>(Enumerable.Repeat(data, 1), device, 1, inputName).FirstOrDefault();
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера. (Inference).
@@ -453,10 +490,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Function source, IList<T[]> data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Function source, IList<T[]> data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+            return source.Predict<T>(Enumerable.Repeat(data, 1), device, 1, inputName).FirstOrDefault();
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
@@ -464,10 +502,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Function source, T[,] data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Function source, T[,] data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Predict<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+            return source.Predict<T>(Enumerable.Repeat(data, 1), device, 1, inputName).FirstOrDefault();
         }
         #endregion
 
@@ -479,12 +518,22 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="data">Набор примеров для которых вычисляется выход</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[][]> PredictMultiOutput<T>(this Function source,
            IEnumerable<Value> data,
-           DeviceDescriptor device) where T : IConvertible
+           DeviceDescriptor device,
+           string inputName) where T : IConvertible
         {
-            var inputVariable = source.Inputs.Single();
+            Variable inputVariable;
+            try
+            {
+                inputVariable = source.Inputs.Single(p => p.Name.ToUpper() == inputName.ToUpper());
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException("Модель имеет несколько входов с одинаковым именем.", ex);
+            }
             foreach (var features in data)
             {
                 var inputDataMap = new Dictionary<Variable, Value>() { { inputVariable, features } };
@@ -515,15 +564,17 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="data">Набор примеров для которых вычисляется выход</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[][]> PredictMultiOutput<T>(this Function source,
             IEnumerable<T[]> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512, 
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var values = dataConverter.ConvertDataToValue(data, minibatchSize);
-            return source.PredictMultiOutput<T>(values, device);
+            return source.PredictMultiOutput<T>(values, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
@@ -531,15 +582,17 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[][]> PredictMultiOutput<T>(this Function source,
             IEnumerable<IList<T[]>> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var values = dataConverter.ConvertDataToValue(data, minibatchSize);
-            return source.PredictMultiOutput<T>(values, device);
+            return source.PredictMultiOutput<T>(values, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
@@ -547,15 +600,17 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[][]> PredictMultiOutput<T>(this Function source,
             IEnumerable<T[,]> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var values = dataConverter.ConvertDataToValue(data, minibatchSize);
-            return source.PredictMultiOutput<T>(values, device);
+            return source.PredictMultiOutput<T>(values, device, inputName);
         }
 
         /// <summary>
@@ -564,10 +619,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[][] PredictMultiOutput<T>(this Function source, Value data, DeviceDescriptor device) where T : IConvertible
+        public static T[][] PredictMultiOutput<T>(this Function source, Value data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.PredictMultiOutput<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+            return source.PredictMultiOutput<T>(Enumerable.Repeat(data, 1), device, inputName).FirstOrDefault();
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
@@ -575,10 +631,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[][] PredictMultiOutput<T>(this Function source, T[] data, DeviceDescriptor device) where T : IConvertible
+        public static T[][] PredictMultiOutput<T>(this Function source, T[] data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.PredictMultiOutput<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+            return source.PredictMultiOutput<T>(Enumerable.Repeat(data, 1), device, 1, inputName).FirstOrDefault();
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера. (Inference).
@@ -586,10 +643,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[][] PredictMultiOutput<T>(this Function source, IList<T[]> data, DeviceDescriptor device) where T : IConvertible
+        public static T[][] PredictMultiOutput<T>(this Function source, IList<T[]> data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.PredictMultiOutput<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
+            return source.PredictMultiOutput<T>(Enumerable.Repeat(data, 1), device, 1, inputName).FirstOrDefault();
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
@@ -597,11 +655,12 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[][] PredictMultiOutput<T>(this Function source, T[,] data, DeviceDescriptor device) where T : IConvertible
+        public static T[][] PredictMultiOutput<T>(this Function source, T[,] data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.PredictMultiOutput<T>(Enumerable.Repeat(data, 1), device).FirstOrDefault();
-        } 
+            return source.PredictMultiOutput<T>(Enumerable.Repeat(data, 1), device, 1, inputName).FirstOrDefault();
+        }
         #endregion
 
         #endregion
@@ -619,12 +678,14 @@ namespace EasyCNTK.Learning
         /// <param name="testData">Тестовые данные. Каждый минипакет должен содержать 1 тестовый пример.</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<Minibatch> testData,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Evaluate<T>(testData, device);
+            return source.Model.Evaluate<T>(testData, device, inputName);
         }
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
@@ -636,16 +697,18 @@ namespace EasyCNTK.Learning
         /// <param name="inputDim">Размерность признаков (разрядность)</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<T[]> testData,
             int inputDim,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var test = dataConverter.ConvertDatasetToMinibatch(testData, inputDim, minibatchSize);
-            return source.Model.Evaluate<T>(test, device);
+            return source.Model.Evaluate<T>(test, device, inputName);
         }
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
@@ -656,16 +719,18 @@ namespace EasyCNTK.Learning
         /// <param name="labels">Набор тестовых меток. Размерность меток должна быть одинаковая.</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<IList<T[]>> features,
             IEnumerable<T[]> labels,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var test = dataConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize);
-            return source.Model.Evaluate<T>(test, device);
+            return source.Model.Evaluate<T>(test, device, inputName);
         }
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
@@ -675,16 +740,18 @@ namespace EasyCNTK.Learning
         /// <param name="features">Набор тестовых данных</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>> Evaluate<T>(this Sequential<T> source,
             IEnumerable<T[,]> features,
             IEnumerable<T[]> labels,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var test = dataConverter.ConvertDatasetToMinibatch(features, labels, minibatchSize);
-            return source.Model.Evaluate<T>(test, device);
+            return source.Model.Evaluate<T>(test, device, inputName);
         }
 
         /// <summary>
@@ -694,12 +761,14 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="testData">Тестовые данные</param>
         /// <param name="device">Устройство для расчетов</param>       
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>[]> Evaluate<T>(this SequentialMultiOutput<T> source,
             IEnumerable<MinibatchMultiOutput> testData,
-            DeviceDescriptor device) where T : IConvertible
+            DeviceDescriptor device,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Evaluate<T>(testData, device);
+            return source.Model.Evaluate<T>(testData, device, inputName);
         }
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
@@ -710,16 +779,18 @@ namespace EasyCNTK.Learning
         /// <param name="labels">Набор меток. Для каждого выхода модели.</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>[]> Evaluate<T>(this SequentialMultiOutput<T> source,
             IEnumerable<T[]> features,
             IEnumerable<T[][]> labels,         
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var test = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels,  minibatchSize);
-            return source.Model.Evaluate<T>(test, device);
+            return source.Model.Evaluate<T>(test, device, inputName);
         }
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
@@ -730,16 +801,18 @@ namespace EasyCNTK.Learning
         /// <param name="labels">Набор меток.  Для каждого выхода модели.</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>[]> Evaluate<T>(this SequentialMultiOutput<T> source,
             IEnumerable<IList<T[]>> features,
             IEnumerable<T[][]> labels,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var test = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize);
-            return source.Model.Evaluate<T>(test, device);
+            return source.Model.Evaluate<T>(test, device, inputName);
         }
         /// <summary>
         /// Вычисляет выход модели для каждого из тестовых примеров.
@@ -750,16 +823,18 @@ namespace EasyCNTK.Learning
         /// <param name="labels">Набор меток.  Для каждого выхода модели.</param>
         /// <param name="device">Устройство для расчетов</param>
         /// <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<EvaluateItem<T>[]> Evaluate<T>(this SequentialMultiOutput<T> source,
             IEnumerable<T[,]> features,
             IEnumerable<T[][]> labels,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
             DataConverter dataConverter = new DataConverter(device);
             var test = dataConverter.ConvertDatasetToMinibatchMultiOutput(features, labels, minibatchSize);
-            return source.Model.Evaluate<T>(test, device);
+            return source.Model.Evaluate<T>(test, device, inputName);
         }
 
         #endregion
@@ -773,10 +848,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Sequential<T> source, Value data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Sequential<T> source, Value data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Predict<T>(data, device);
+            return source.Model.Predict<T>(data, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
@@ -785,12 +861,14 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="data">Набор примеров для которых вычисляется выход</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
            IEnumerable<Value> data,
-           DeviceDescriptor device) where T : IConvertible
+           DeviceDescriptor device,
+           string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Predict<T>(data, device);
+            return source.Model.Predict<T>(data, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
@@ -798,13 +876,15 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="data">Набор примеров для которых вычисляется выход</param>
-        /// <param name="device
+        /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
             IEnumerable<T[]> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Predict<T>(data, device, minibatchSize);
+            return source.Model.Predict<T>(data, device, minibatchSize, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
@@ -812,13 +892,15 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
             IEnumerable<IList<T[]>> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Predict<T>(data, device, minibatchSize);
+            return source.Model.Predict<T>(data, device, minibatchSize, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
@@ -826,13 +908,15 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[]> Predict<T>(this Sequential<T> source,
             IEnumerable<T[,]> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Predict<T>(data, device, minibatchSize);
+            return source.Model.Predict<T>(data, device, minibatchSize, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера. (Inference).
@@ -840,10 +924,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Sequential<T> source, T[] data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Sequential<T> source, T[] data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Predict<T>(data, device);
+            return source.Model.Predict<T>(data, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
@@ -851,10 +936,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Sequential<T> source, IList<T[]> data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Sequential<T> source, IList<T[]> data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Predict<T>(data, device);
+            return source.Model.Predict<T>(data, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
@@ -862,11 +948,12 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[] Predict<T>(this Sequential<T> source, T[,] data, DeviceDescriptor device) where T : IConvertible
+        public static T[] Predict<T>(this Sequential<T> source, T[,] data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Model.Predict<T>(data, device);
-        } 
+            return source.Model.Predict<T>(data, device, inputName);
+        }
         #endregion
 
         #region one input - multi output
@@ -876,10 +963,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[][] Predict<T>(this SequentialMultiOutput<T> source, Value data, DeviceDescriptor device) where T : IConvertible
+        public static T[][] Predict<T>(this SequentialMultiOutput<T> source, Value data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Model.PredictMultiOutput<T>(data, device);
+            return source.Model.PredictMultiOutput<T>(data, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
@@ -888,12 +976,14 @@ namespace EasyCNTK.Learning
         /// <param name="source"></param>
         /// <param name="data">Набор примеров для которых вычисляется выход</param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[][]> Predict<T>(this SequentialMultiOutput<T> source,
            IEnumerable<Value> data,
-           DeviceDescriptor device) where T : IConvertible
+           DeviceDescriptor device,
+           string inputName = "Input") where T : IConvertible
         {
-            return source.Model.PredictMultiOutput<T>(data, device);
+            return source.Model.PredictMultiOutput<T>(data, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
@@ -901,13 +991,15 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="data">Набор примеров для которых вычисляется выход</param>
-        /// <param name="device
+        /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         public static IEnumerable<T[][]> Predict<T>(this SequentialMultiOutput<T> source,
             IEnumerable<T[]> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.PredictMultiOutput<T>(data, device, minibatchSize);
+            return source.Model.PredictMultiOutput<T>(data, device, minibatchSize, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
@@ -915,13 +1007,15 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[][]> Predict<T>(this SequentialMultiOutput<T> source,
             IEnumerable<IList<T[]>> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.PredictMultiOutput<T>(data, device, minibatchSize);
+            return source.Model.PredictMultiOutput<T>(data, device, minibatchSize, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
@@ -929,13 +1023,15 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static IEnumerable<T[][]> Predict<T>(this SequentialMultiOutput<T> source,
             IEnumerable<T[,]> data,
             DeviceDescriptor device,
-            int minibatchSize = 512) where T : IConvertible
+            int minibatchSize = 512,
+            string inputName = "Input") where T : IConvertible
         {
-            return source.Model.PredictMultiOutput<T>(data, device, minibatchSize);
+            return source.Model.PredictMultiOutput<T>(data, device, minibatchSize, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера. (Inference).
@@ -943,10 +1039,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[][] Predict<T>(this SequentialMultiOutput<T> source, T[] data, DeviceDescriptor device) where T : IConvertible
+        public static T[][] Predict<T>(this SequentialMultiOutput<T> source, T[] data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Model.PredictMultiOutput<T>(data, device);
+            return source.Model.PredictMultiOutput<T>(data, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
@@ -954,10 +1051,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[][] Predict<T>(this SequentialMultiOutput<T> source, IList<T[]> data, DeviceDescriptor device) where T : IConvertible
+        public static T[][] Predict<T>(this SequentialMultiOutput<T> source, IList<T[]> data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Model.PredictMultiOutput<T>(data, device);
+            return source.Model.PredictMultiOutput<T>(data, device, inputName);
         }
         /// <summary>
         /// Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
@@ -965,10 +1063,11 @@ namespace EasyCNTK.Learning
         /// <typeparam name="T">Тип данных. Поддерживается <seealso cref="float"/>, <seealso cref="double"/></typeparam>
         /// <param name="source"></param>
         /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
-        public static T[][] Predict<T>(this SequentialMultiOutput<T> source, T[,] data, DeviceDescriptor device) where T : IConvertible
+        public static T[][] Predict<T>(this SequentialMultiOutput<T> source, T[,] data, DeviceDescriptor device, string inputName = "Input") where T : IConvertible
         {
-            return source.Model.PredictMultiOutput<T>(data, device);
+            return source.Model.PredictMultiOutput<T>(data, device, inputName);
         } 
         #endregion
 
