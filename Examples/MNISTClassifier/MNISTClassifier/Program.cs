@@ -63,11 +63,12 @@ namespace MNISTClassifier
             }
 
             var device = DeviceDescriptor.GPUDevice(0);
+
             int minibatchSize = 512;
             int inputDimension = 784;
             int epochs = 50;
 
-            var model = new Sequential<double>(device, new[] { inputDimension });
+            var model = new Sequential<double>(device, new[] { inputDimension }, inputName: "Input");
             model.Add(new Residual2(784, new Tanh()));                       
             model.Add(new Residual2(300, new Tanh()));
             model.Add(new Dense(10, new Sigmoid()));
@@ -78,9 +79,9 @@ namespace MNISTClassifier
                 new SquaredError(),
                 new ClassificationError(),
                 new Adam(0.1, 0.9, minibatchSize),
-                epochs,
-                device,
+                epochs,                
                 shuffleSampleInMinibatchesPerEpoch: false,
+                device: device,
                 ruleUpdateLearningRate: (epoch, learningRate) => epoch % 10 == 0 ? 0.95 * learningRate : learningRate,
                 actionPerEpoch: (epoch, loss, eval) =>
                 {
@@ -91,7 +92,8 @@ namespace MNISTClassifier
                         return true;
                     }
                     return false;
-                });
+                },
+                inputName: "Input");
 
             Console.WriteLine($"Duration train: {fitResult.Duration}");
             Console.WriteLine($"Epochs: {fitResult.EpochCount}");
