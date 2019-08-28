@@ -400,7 +400,7 @@ namespace EasyCNTK.Learning
 
                 foreach (var item in predicted)
                 {
-                    yield return (T[])item;
+                    yield return item.ToArray();
                 }
             }
         }
@@ -551,7 +551,7 @@ namespace EasyCNTK.Learning
                 for (int i = 0; i < result[0].Count; i++)
                 {
                     yield return result
-                        .Select(p => (T[])p[i])
+                        .Select(p => p[i].ToArray())
                         .ToArray();
                 }
             }
