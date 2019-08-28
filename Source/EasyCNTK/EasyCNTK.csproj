@@ -6,7 +6,7 @@
     <LangVersion>latest</LangVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <Authors>Stanislav Grigoriev</Authors>
     <Company>Stanislav Grigoriev</Company>
     <Description>C# library for easy Deep Learning and Deep Reinforcement Learning. It is wrapper over C# CNTK API. Has implementation of layers (LSTM, Convolution etc.), optimizers, losses, shortcut-connections, sequential model, sequential  multi-output model, agent teachers, policy gradients, actor-critic etc. 
@@ -20,9 +20,10 @@ Allows train, evaluate and inference deep neural networks in style similar to Ke
     <RepositoryType>public</RepositoryType>
     <PackageId>EasyCNTK</PackageId>
     <PackageIconUrl>https://raw.githubusercontent.com/StanislavGrigoriev/EasyCNTK/master/logo.ico</PackageIconUrl>
-    <PackageReleaseNotes>Bugfix: https://github.com/StanislavGrigoriev/EasyCNTK/issues/1
+    <PackageReleaseNotes>Bugfix: https://github.com/StanislavGrigoriev/EasyCNTK/issues/2
 </PackageReleaseNotes>
-    <FileVersion>0.4.1.0</FileVersion>
+    <FileVersion>0.4.2.0</FileVersion>
+    <AssemblyVersion>0.4.2.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

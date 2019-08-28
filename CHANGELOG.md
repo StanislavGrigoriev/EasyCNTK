@@ -1,5 +1,18 @@
 ## Change log
 
+### v0.4.2
+* Bugfix [#2 issue](https://github.com/StanislavGrigoriev/EasyCNTK/issues/2)
+
+### v0.4.1
+* Bugfix [#1 issue](https://github.com/StanislavGrigoriev/EasyCNTK/issues/1)
+
+### v0.4.0
+* добавил модели с несколькими выходами
+* добавил поддержку Reinforcement Learning
+* добавил реализацию обучения агента методом Policy Gradients
+* добавил реализацию обучения агента методом Actor-Critic
+* небольшие изменения публичного API (Predict, Fit)
+
 ### v0.3.0
 * добавил метрики классификации (Precision, Recall)
 * добавил генерацию синтетических примеров методом SMOTE
