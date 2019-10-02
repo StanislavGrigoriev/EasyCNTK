@@ -131,7 +131,7 @@ namespace EasyCNTK.Learning
 
         /// <summary>
         /// На основе заданного множества примеров одного класса, создает необходимое количество синтетических примеров этого же класса, используя метод Synthetic Minority Over-sampling Technique (SMOTE)
-        /// Для корректной генерации входные данные должны быть нормализованы.
+        /// Для корректной генерации входные данные должны быть нормализованы. Предполагает, что используются непрерывные признаки.
         /// </summary>
         /// <typeparam name="T">Тип элементов, поддеживаются все типы, реализующие <seealso cref="IConvertible"/></typeparam>
         /// <param name="source"></param>
@@ -139,7 +139,7 @@ namespace EasyCNTK.Learning
         /// <param name="nearestNeighborsCount">Количество ближаших соседей, используемых для геренации синтетического примера</param>
         /// <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
         /// <returns></returns>
-        public static IList<T[]> MakeSimilarSamplesBySMOTE<T>(this IList<T[]> source, int similarSampleCount, int nearestNeighborsCount = 5, int seed = 0) where T : IConvertible
+        public static IEnumerable<T[]> MakeSimilarSamplesBySMOTE<T>(this IList<T[]> source, int similarSampleCount, int nearestNeighborsCount = 5, int seed = 0) where T : IConvertible
         {
             double computeDistance(T[] first, T[] second)
             {
@@ -204,8 +204,7 @@ namespace EasyCNTK.Learning
 
             #region создаем заданное количество синтетических примеров
             Random rnd = seed == 0 ? new Random() : new Random(seed);
-            var elementTypeCode = source[0][0].GetTypeCode();
-            var result = new List<T[]>(similarSampleCount);
+            var elementTypeCode = source[0][0].GetTypeCode();           
             for (int i = 0; i < similarSampleCount; i++)
             {
                 int indexRealSample = rnd.Next(source.Count);
@@ -222,11 +221,92 @@ namespace EasyCNTK.Learning
                     double gap = rnd.NextDouble();
                     syntheticSample[element] = (T)Convert.ChangeType(gap * difference + source[indexRealNeighbor][element].ToDouble(CultureInfo.InvariantCulture), elementTypeCode);
                 }
-                result.Add(syntheticSample);
+                yield return syntheticSample;
             }
             #endregion
+        }
+        /// <summary>
+        /// На основе заданного множества примеров одного класса, создает необходимое количество синтетических примеров этого же класса, используя метод Synthetic Minority Over-sampling Technique (SMOTE)
+        /// Для корректной генерации входные данные должны быть нормализованы. Производит генерацию только на основе тех членов(свойств и полей), которые реализуют <seealso cref="IConvertible"/>, и соотвественно в сгенерированных примерах записывает значения членов только в них.
+        /// Предполагает, что все члены хранят непрерывные признаки.
+        /// </summary>
+        /// <typeparam name="T">Тип примеров</typeparam>
+        /// <typeparam name="UElement">Тип элементов(свойства, поля) в которые преобразуются значения членов на этапе генерации, поддеживаются все типы, реализующие <seealso cref="IConvertible"/>. 
+        /// Рекомендуется использовать <seealso cref="double"/>, если основная часть членов иммеет этот тип, или <seealso cref="float"/> для остальных случаев.</typeparam>       
+        /// <param name="source"></param>
+        /// <param name="similarSampleCount">Количество похожих синтетических примеров, которое требуется создать</param>
+        /// <param name="nearestNeighborsCount">Количество ближаших соседей, используемых для геренации синтетического примера</param>
+        /// <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
+        /// <returns></returns>
+        public static IEnumerable<T> MakeSimilarSamplesBySMOTE<T, UElement>(this IList<T> source, int similarSampleCount, int nearestNeighborsCount = 5, int seed = 0) where T : new() where UElement : IConvertible
+        {
+            var arrays = source.TransformConvertibleMembersToArray<T, UElement>().ToList();
+            var syntheticArrays = arrays.MakeSimilarSamplesBySMOTE(similarSampleCount, nearestNeighborsCount, seed);
+            var syntheticSamples = syntheticArrays.TransformArrayToObjectWithConvertibleMembers<T, UElement>();
 
-            return result;
+            return syntheticSamples;
+        }
+
+        private static IEnumerable<U[]> TransformConvertibleMembersToArray<T, U>(this IList<T> source) where T : new() where U:IConvertible
+        {
+            var iconvertible = typeof(IConvertible);
+            var properties = typeof(T)
+                .GetProperties()
+                .Where(p => iconvertible.IsAssignableFrom(p.PropertyType))
+                .OrderBy(p => p.Name)
+                .ToArray();
+            var fields = typeof(T)
+                .GetFields()
+                .Where(p => iconvertible.IsAssignableFrom(p.FieldType))
+                .OrderBy(p => p.Name)
+                .ToArray();
+
+            var typeU = typeof(U);
+            foreach (var item in source)
+            {
+                U[] array = new U[properties.Length + fields.Length];
+                int i = 0;
+                foreach (var property in properties)
+                {
+                    array[i++] = (U)Convert.ChangeType(property.GetValue(item), typeU);
+                }
+                foreach (var field in fields)
+                {
+                    array[i++] = (U)Convert.ChangeType(field.GetValue(item), typeU);
+                }
+                yield return array;
+            }
+        }
+
+        private static IEnumerable<T> TransformArrayToObjectWithConvertibleMembers<T, U>(this IEnumerable<U[]> source) where T : new() where U : IConvertible
+        {
+            var iconvertible = typeof(IConvertible);
+            var properties = typeof(T)
+                .GetProperties()
+                .Where(p => iconvertible.IsAssignableFrom(p.PropertyType))
+                .OrderBy(p => p.Name)
+                .ToArray();
+            var fields = typeof(T)
+                .GetFields()
+                .Where(p => iconvertible.IsAssignableFrom(p.FieldType))
+                .OrderBy(p => p.Name)
+                .ToArray();
+
+            var typeU = typeof(U);
+            foreach (var item in source)
+            {
+                T obj = new T();
+                int i = 0;
+                foreach (var property in properties)
+                {
+                    property.SetValue(obj, item[i++]);
+                }
+                foreach (var field in fields)
+                {
+                    field.SetValue(obj, item[i++]);
+                }
+                yield return obj;
+            }
         }
 
         /// <summary>
