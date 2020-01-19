@@ -23,7 +23,7 @@ namespace EasyCNTK.Learning.Optimizers
         private double _gradientClippingThresholdPerSample;
 
         public override double LearningRate { get; }
-        public override int MinibatchSize { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+        public override int MinibatchSize { get; set; }
 
         /// <summary>
         /// Инициализирует оптимизатор Стохастического градиентного спуска (SGD)
