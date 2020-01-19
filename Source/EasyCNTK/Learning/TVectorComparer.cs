@@ -27,9 +27,7 @@ namespace EasyCNTK.Learning
 
         public int GetHashCode(T[] obj)
         {
-            return obj
-                .Select((p, i) => p.GetHashCode() ^ i)
-                .Aggregate((a, b) => a ^ b);
+            return 0;
         }
     }
 }

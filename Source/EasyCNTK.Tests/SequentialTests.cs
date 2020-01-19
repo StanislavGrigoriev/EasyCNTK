@@ -35,5 +35,30 @@ namespace EasyCNTK.Tests
                 return new Task(() => model.Add(new Dense(4, new Tanh())));
             });
         }
+        [Fact]
+        public void Conv1D_1DShape_Test()
+        {
+            var model = new Sequential<double>(DeviceDescriptor.CPUDevice, new[] { 10, 1 });
+            model.Add(new Convolution1D(4));
+
+            bool shapeIsRight = model.Model.Output.Shape.Dimensions.Count == 2 &&
+                model.Model.Output.Shape.Dimensions[0] == 7 &&
+                model.Model.Output.Shape.Dimensions[1] == 1;
+
+            Assert.True(shapeIsRight);
+        }
+        [Fact]
+        public void Conv1D_2DShape_Test()
+        {
+            var model = new Sequential<double>(DeviceDescriptor.CPUDevice, new[] { 10, 5, 1 });
+            model.Add(new Convolution1D(4));
+
+            bool shapeIsRight = model.Model.Output.Shape.Dimensions.Count == 3 &&
+                model.Model.Output.Shape.Dimensions[0] == 7 &&
+                model.Model.Output.Shape.Dimensions[1] == 5 &&
+                model.Model.Output.Shape.Dimensions[2] == 1;
+
+            Assert.True(shapeIsRight);
+        }
     }
 }

@@ -1,0 +1,2019 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>EasyCNTK</name>
+    </assembly>
+    <members>
+        <member name="T:EasyCNTK.DataConverter">
+            <summary>
+            Реализует методы преобразования нативных данных в формат пригодный для обучения в CNTK
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.GetSegments``1(System.Collections.Generic.IEnumerable{``0},System.Int32)">
+            <summary>
+            Разбивает входную последовательность на сегменты (подпоследовательности) равного размера
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="source">Исходная последовательность</param>
+            <param name="segmentSize">Размер сегмента (количество элементов)</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.#ctor(CNTK.DeviceDescriptor)">
+            <summary>
+            Инициализирует конвертер для работы с указанным устройством (CPU, GPU)
+            </summary>
+            <param name="device">Устройство для расчетов</param>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatch``1(System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},System.Collections.Generic.IEnumerable{``0[]},System.Int32)">
+            <summary>
+            Преобразует датасет в наборы обучающих примеров для использования в реккурентных сетях. 
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+            <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatch``1(System.Collections.Generic.IEnumerable{``0[]},System.Int32,System.Int32)">
+            <summary>
+            Преобразует датасет в наборы обучающих примеров для использования в CNTK. 
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="dataset">Датасет. Каждый пример должен содержать в начале массива признаки размерностью inputDim, а в конце метки классов размерностью outputDim. 
+            Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="inputDim">Размерность признаков (разрядность)</param> 
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatch``1(System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[]},System.Int32)">
+            <summary>
+            Преобразует датасет в наборы обучающих примеров в 2D для использования в CNTK. 
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="features">Набор признаков в 2D</param>
+            <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDataToValue``1(System.Collections.Generic.IEnumerable{``0[]},System.Int32)">
+            <summary>
+            Преобразует нативный набор признаков в набор признаков в формате CNTK.
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="data">Набор признаков для каждого примера(sample)</param>
+            <param name="minibatchSize">Размер пакета, по которым разбиваются признаки</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDataToValue``1(System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},System.Int32)">
+            <summary>
+            Преобразует нативный набор признаков (последовательность) в набор признаков в формате CNTK.
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="data">Набор признаков для каждого примера(sample), где пример - последовательность</param>
+            <param name="minibatchSize">Размер пакета, по которым разбиваются признаки</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDataToValue``1(System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Int32)">
+            <summary>
+            Преобразует нативный набор признаков (2D) в набор признаков в формате CNTK.
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="data">Набор признаков для каждого примера(sample), где пример - 2D</param>
+            <param name="minibatchSize">Размер пакета, по которым разбиваются признаки</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatchMultiOutput``1(System.Collections.Generic.IEnumerable{``0[]},System.Collections.Generic.IEnumerable{``0[][]},System.Int32)">
+            <summary>
+            Преобразует датасет в наборы обучающих примеров для использования в CNTK. Используется для обучения моделей с несколькими выходами.
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="features">Набор признаков для каждого примера(sample)</param>
+            <param name="labels">Набор меток для каждого выхода модели, размерность для каждого выхода может быть своя. </param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatchMultiOutput``1(System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},System.Collections.Generic.IEnumerable{``0[][]},System.Int32)">
+            <summary>
+            Преобразует датасет в наборы обучающих примеров для использования в CNTK. Используется для обучения реккурентных моделей с несколькими выходами.
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="features">Набор признаков для каждого примера(sample), при пример - последовательность</param>
+            <param name="labels">Набор меток для каждого выхода модели, размерность для каждого выхода может быть своя. </param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatchMultiOutput``1(System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},System.Int32)">
+            <summary>
+            Преобразует 2D датасет в наборы обучающих примеров для использования в CNTK. Используется для обучения моделей с несколькими выходами.
+            </summary>
+            <typeparam name="T">Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="features">Набор признаков для каждого примера(sample) в 2D</param>
+            <param name="labels">Набор меток для каждого выхода модели, размерность для каждого выхода может быть своя. </param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyCNTK.Minibatch">
+            <summary>
+            Представляет пачку данных для обучения
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Minibatch.Size">
+            <summary>
+            Размер пачки (количество обучающих примеров в пачке)
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Minibatch.Features">
+            <summary>
+            Признаки
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Minibatch.Labels">
+            <summary>
+            Метки классов/непрерывные значения меток
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.MinibatchMultiOutput">
+            <summary>
+            Представляет пачку данных для обучения моделей с несколькими выходами
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.MinibatchMultiOutput.Size">
+            <summary>
+            Размер пачки (количество обучающих примеров в пачке)
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.MinibatchMultiOutput.Features">
+            <summary>
+            Признаки
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.MinibatchMultiOutput.Labels">
+            <summary>
+            Метки классов/непрерывные значения меток, для каждого выхода модели
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Layers.BatchNormalization">
+            <summary>
+            Реализует слой батч-нормализации
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.BatchNormalization.Build(CNTK.Function,CNTK.DeviceDescriptor)">
+            <summary>
+            Создает слой батч-нормализации
+            </summary>
+            <param name="input"></param>
+            <param name="device"></param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyCNTK.Layers.Convolution1D">
+            <summary>
+            Реализует сверточный слой в одномерном пространстве
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.Convolution1D.Build(CNTK.Variable,System.Int32,CNTK.DeviceDescriptor,System.Int32,System.Int32,System.Int32,EasyCNTK.Layers.Padding,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
+            <summary>
+            Добавляет одномерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+            </summary>
+            <param name="input"></param>
+            <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице/горизонталь изображения)</param>        
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+            <param name="outChannelsCount">Количество каналов выходной ячейки (разрядность выходной ячейки после свертки). Количество каналов <paramref name="inputChannelsCount"/> следующего слоя должно равнятся числу выходных каналов текущего слоя. </param>
+            <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
+            <param name="hStride">Шаг спещения окна свертки по горизонтали (по столбцам матрицы)</param>        
+            <param name="padding">Заполнение при использовании сверток</param>
+            <param name="name"></param>
+        </member>
+        <member name="M:EasyCNTK.Layers.Convolution1D.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,EasyCNTK.Layers.Padding,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
+            <summary>
+            Добавляет двумерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+            </summary>
+            <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице)</param>        
+            <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+            <param name="outChannelsCount">Разрядность выходной ячейки после свертки</param>
+            <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
+            <param name="hStride">Шаг спещения окна свертки по горизонтали (по столбцам матрицы)</param>        
+            <param name="padding">Заполнение при использовании сверток</param>
+            <param name="name"></param>
+        </member>
+        <member name="T:EasyCNTK.Layers.Convolution2D">
+            <summary>
+            Реализует сверточный слой в двумерном пространстве
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.Convolution2D.Build(CNTK.Variable,System.Int32,System.Int32,CNTK.DeviceDescriptor,System.Int32,System.Int32,System.Int32,System.Int32,EasyCNTK.Layers.Padding,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
+            <summary>
+            Добавляет двумерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+            </summary>
+            <param name="input"></param>
+            <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице/горизонталь изображения)</param>
+            <param name="kernelHeight">Высота ядра свертки (строки в двумерной матрице/вертикаль изображения)</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+            <param name="outChannelsCount">Количество каналов выходной ячейки (разрядность выходной ячейки после свертки). Количество каналов <paramref name="inputChannelsCount"/> следующего слоя должно равнятся числу выходных каналов текущего слоя. </param>
+            <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
+            <param name="hStride">Шаг спещения окна свертки по горизонтали (по столбцам матрицы)</param>
+            <param name="vStride">Шаг смещения окна свертки по вертикали (по строкам матрицы)</param>
+            <param name="padding">Заполнение при использовании сверток</param>
+            <param name="name"></param>
+        </member>
+        <member name="M:EasyCNTK.Layers.Convolution2D.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,EasyCNTK.Layers.Padding,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
+            <summary>
+            Добавляет двумерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+            </summary>
+            <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице)</param>
+            <param name="kernelHeight">Высота ядра свертки (строки в двумерной матрице)</param>
+            <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+            <param name="outChannelsCount">Разрядность выходной ячейки после свертки</param>
+            <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
+            <param name="hStride">Шаг спещения окна свертки по горизонтали (по столбцам матрицы)</param>
+            <param name="vStride">Шаг смещения окна свертки по вертикали (по строкам матрицы)</param>
+            <param name="padding">Заполнение при использовании сверток</param>
+            <param name="name"></param>
+        </member>
+        <member name="T:EasyCNTK.Layers.Padding">
+            <summary>
+            Задает заполнение при использовании сверток
+            </summary>
+        </member>
+        <member name="F:EasyCNTK.Layers.Padding.Valid">
+            <summary>
+            Заполнения краев нет (перемещения ядра свертки строго ограничено размерами изображения), изображение сворачивается по классике: n-f+1 x n-f+1
+            </summary>
+        </member>
+        <member name="F:EasyCNTK.Layers.Padding.Same">
+            <summary>
+            Заполнения краев есть (перемещения ядра свертки выходит за границы изображения, лишняя часть дополняется нолями, выходное изображение остается того же размера что и до свертки), изображение сворачивается: n+2p-f+1 x n+2p-f+1
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Layers.Convolution3D">
+            <summary>
+            Реализует сверточный слой в трехмерном просранстве
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.Convolution3D.Build(CNTK.Variable,System.Int32,System.Int32,System.Int32,CNTK.DeviceDescriptor,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,EasyCNTK.Layers.Padding,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
+            <summary>
+            Добавляет трехмерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не трехмерный выход, выбрасывается исключение
+            </summary>
+            <param name="input"></param>
+            <param name="kernelWidth">Ширина ядра свертки (x ось куба)</param>
+            <param name="kernelHeight">Высота ядра свертки (y ось куба)</param>
+            <param name="kernelDepth">Глубина ядра свертки (z ось куба)</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputChannelsCount">Количество каналов входного 3D изображения(куба), для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+            <param name="outChannelsCount">Количество каналов выходной ячейки (разрядность выходной ячейки после свертки). Количество каналов <paramref name="inputChannelsCount"/> следующего слоя должно равнятся числу выходных каналов текущего слоя. </param>
+            <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
+            <param name="hStride">Шаг спещения окна свертки по оси X</param>
+            <param name="vStride">Шаг смещения окна свертки по оси Y</param>
+            <param name="dStride">Шаг смещения окна свертки по оси Z</param>
+            <param name="padding">Заполнение при использовании сверток</param>
+            <param name="name"></param>
+        </member>
+        <member name="M:EasyCNTK.Layers.Convolution3D.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,EasyCNTK.Layers.Padding,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
+            <summary>
+            Добавляет трехмерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не трехмерный выход, выбрасывается исключение
+            </summary>
+            <param name="kernelWidth">Ширина ядра свертки (x ось куба)</param>
+            <param name="kernelHeight">Высота ядра свертки (y ось куба)</param>
+            <param name="kernelDepth">Глубина ядра свертки (z ось куба)</param>      
+            <param name="inputChannelsCount">Количество каналов входного 3D изображения(куба), для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+            <param name="outChannelsCount">Количество каналов выходной ячейки (разрядность выходной ячейки после свертки). Количество каналов <paramref name="inputChannelsCount"/> следующего слоя должно равнятся числу выходных каналов текущего слоя. </param>
+            <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
+            <param name="hStride">Шаг спещения окна свертки по оси X</param>
+            <param name="vStride">Шаг смещения окна свертки по оси Y</param>
+            <param name="dStride">Шаг смещения окна свертки по оси Z</param>
+            <param name="padding">Заполнение при использовании сверток</param>
+            <param name="name"></param>
+        </member>
+        <member name="T:EasyCNTK.Layers.Dense">
+            <summary>
+            Реализует полносвязный слой с заданной функцией активации
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.Dense.createFullyConnectedLinearLayer(CNTK.Variable,System.Int32,EasyCNTK.ActivationFunctions.ActivationFunction,CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Создает полносвязный слой с заданной функцией активации
+            </summary>
+            <param name="input">Входная переменная(слой) заданной разрядности</param>
+            <param name="outputDim">Выходная разрядность(кол-во нейронов)</param>
+            <param name="activationFunction">Функция активации</param>
+            <param name="device">Устройство на котором производится расчет</param>
+            <param name="name">Имя слоя</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Layers.Dense.Build(CNTK.Function,System.Int32,EasyCNTK.ActivationFunctions.ActivationFunction,CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Создает полносвязный слой с заданной функцией активации
+            </summary>
+            <param name="input">Входная переменная(слой) заданной разрядности</param>
+            <param name="outputDim">Выходная разрядность(кол-во нейронов)</param>
+            <param name="activationFunction">Функция активации</param>
+            <param name="device">Устройство на котором производится расчет</param>
+            <param name="name">Имя слоя</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Layers.Dense.#ctor(System.Int32,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
+            <summary>
+            Создает полносвязный слой с заданной функцией активации
+            </summary>
+            <param name="outputDimension">Выходная разрядность(кол-во нейронов)</param>
+            <param name="activationFunction">Функция активации, null если не требуется</param>
+            <param name="name">Имя слоя</param>
+        </member>
+        <member name="T:EasyCNTK.Layers.Dropout">
+            <summary>
+            Реализует слой Dropout
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.Dropout.Build(CNTK.Function,System.Double,System.UInt32,System.String)">
+            <summary>
+             Применяет функцию дропаут к последнему добавленному слою
+            </summary>
+            <param name="input">Входной слой</param>
+            <param name="dropoutRate">Доля отключаемых нейронов в слое</param>
+            <param name="seed"></param>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyCNTK.Layers.Flatten">
+            <summary>
+            Реализует слой преобразующий вход в "плоское" представление (вектор)
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Layers.LSTM">
+            <summary>
+            Реализует слой LSTM.
+            Клеточное состояние (С) имеет общую размерность - все гейты имеют размерность клеточного состояния, масштабирование производится только на входе и выходе  из ячейки.
+            Вход (X[t]+H[t-1]) масштабируется к ячейке памяти (С[t]), ячейка памяти масштабируется к выходу (H[t])
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.LSTM.LSTMCell(CNTK.Variable,CNTK.Variable,CNTK.Variable,System.Boolean,EasyCNTK.Layers.Layer,CNTK.DeviceDescriptor)">
+            <summary>
+            Создает ЛСТМ ячейку, которая реализует один шаг повторения в реккурентной сети.
+            В качестве аргументов принимает предыдущие состояния ячейки(c - cell state) и выхода(h - hidden state).
+            Возвращает кортеж нового состояния ячейки(c - cell state) и выхода(h - hidden state).      
+            </summary>
+            <param name="input">Вход в ЛСТМ (Х на шаге t)</param>
+            <param name="prevOutput">Предыдущее состояние выхода ЛСТМ (h на шаге t-1)</param>
+            <param name="prevCellState">Предыдущее состояние ячейки ЛСТМ (с на шаге t-1)</param> 
+            <param name="useShortcutConnections">Указывает, следует ли создавать ShortcutConnections для этой ячейки</param>
+            <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию. Если не null -  будет применена самостабилизация к входам prevOutput и prevCellState </param>
+            <param name="device">Устройтсво для расчетов</param>
+            <returns>Функция (prev_h, prev_c, input) -> (h, c) которая реализует один шаг повторения ЛСТМ слоя</returns>
+        </member>
+        <member name="M:EasyCNTK.Layers.LSTM.Build(CNTK.Function,System.Int32,CNTK.DeviceDescriptor,System.Int32,System.Boolean,System.Boolean,EasyCNTK.Layers.Layer,System.String)">
+            <summary>
+            Создает слой LSTM. 
+            Клеточное состояние (С) имеет общую размерность - все гейты имеют размерность клеточного состояния, масштабирование производится только на входе и выходе  из ячейки.
+            Вход (X[t]+H[t-1]) масштабируется к ячейке памяти (С[t]), ячейка памяти масштабируется к выходу (H[t])
+            </summary>
+            <param name="input">Вход (X)</param>
+            <param name="lstmDimension">Разрядность выходного слоя (H)</param>        
+            <param name="cellDimension">Разрядность внутреннего слоя ячейки памяти, если 0 - устанавливается разрядность выходного слоя (C)</param>        
+            <param name="useShortcutConnections">Если true, использовать проброс входа параллельно слою. По умолчанию включено.</param>
+            <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию. Если не null -  будет применена самостабилизация к входам prevOutput и prevCellState</param>
+            <param name="isLastLstm">Указывает, будет ли это последний из слоев LSTM (следующие слои в сети нерекуррентные). Для того чтобы стыковать LSTM слои друг за другом, у всех слоев, кроме последнего, нужно установить false</param>
+            <param name="outputName">название слоя</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Layers.LSTM.#ctor(System.Int32,System.Int32,System.Boolean,System.Boolean,EasyCNTK.Layers.Layer,System.String)">
+            <summary>
+            Создает слой LSTM. 
+            Клеточное состояние (С) имеет общую размерность - все гейты имеют размерность клеточного состояния, масштабирование производится только на входе и выходе  из ячейки.
+            Вход (X[t]+H[t-1]) масштабируется к ячейке памяти (С[t]), ячейка памяти масштабируется к выходу (H[t])
+            </summary>
+            <param name="lstmOutputDim">Разрядность выходного слоя (H)</param>        
+            <param name="lstmCellDim">Разрядность внутреннего слоя ячейки памяти, если 0 - устанавливается разрядность выходного слоя (C)</param>
+            <param name="useShortcutConnections">Если true, использовать проброс входа параллельно слою. По умолчанию включено.</param>
+            <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию. Если не null -  будет применена самостабилизация к входам C[t-1] и H[t-1]</param>
+            <param name="isLastLstm">Указывает, будет ли это последний из слоев LSTM (следующие слои в сети нерекуррентные). Для того чтобы стыковать LSTM слои друг за другом, у всех слоев, кроме последнего, нужно установить false</param>
+            <param name="name"></param>
+        </member>
+        <member name="T:EasyCNTK.Layers.LSTMv1">
+            <summary>
+            Реализует слой LSTM.
+            Клеточное состояние (С) имеет независимую размерность, все гейты имеют размерность выхода (H), масштабирование производится непосредственно при записи в клеточное состояние.
+            Вход (X[t]) масштабируется к выходу (H[t-1]) и суммируется (X[t]+H[t-1]), ячейка памяти (С) масштабируется к выходу (H). 
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.LSTMv1.LSTMCell(CNTK.Variable,CNTK.Variable,CNTK.Variable,System.Boolean,EasyCNTK.Layers.Layer,CNTK.DeviceDescriptor)">
+            <summary>
+            Создает ЛСТМ ячейку, которая реализует один шаг повторения в реккурентной сети.
+            В качестве аргументов принимает предыдущие состояния ячейки(c - cell state) и выхода(h - hidden state).
+            Возвращает кортеж нового состояния ячейки(c - cell state) и выхода(h - hidden state).      
+            </summary>
+            <param name="input">Вход в ЛСТМ (Х на шаге t)</param>
+            <param name="prevOutput">Предыдущее состояние выхода ЛСТМ (h на шаге t-1)</param>
+            <param name="prevCellState">Предыдущее состояние ячейки ЛСТМ (с на шаге t-1)</param>
+            <param name="useShortcutConnections">Указывает, следует ли создавать ShortcutConnections для этой ячейки</param>
+            <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию к входам prevOutput и prevCellState</param>
+            <param name="device">Устройтсво для расчетов</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Layers.LSTMv1.Build(CNTK.Function,System.Int32,CNTK.DeviceDescriptor,System.Int32,System.Boolean,System.Boolean,EasyCNTK.Layers.Layer,System.String)">
+            <summary>
+            Создает слой LSTM. 
+            Клеточное состояние (С) имеет независимую размерность, все гейты имеют размерность выхода (H), масштабирование производится непосредвенно при записи в клеточное состояние.
+            Вход (X[t]) масштабируется к выходу (H[t-1]) и суммируется (X[t]+H[t-1]), ячейка памяти (С) масштабируется к выходу (H). 
+            </summary>
+            <param name="input">Вход (X)</param>
+            <param name="lstmDimension">Разрядность выходного слоя (H)</param>        
+            <param name="cellDimension">Разрядность внутреннего слоя ячейки памяти, если 0 - устанавливается разрядность выходного слоя (C)</param>
+            <param name="useShortcutConnections">Если true, использовать проброс входа параллельно слою. По умолчанию включено.</param>
+            <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию</param>
+            <param name="isLastLstm">Указывает, будет ли это последний из слоев LSTM (следующие слои в сети нерекуррентные). Для того чтобы стыковать LSTM слои друг за другом, у всех слоев, кроме последнего, нужно установить false</param>
+            <param name="outputName">название слоя</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Layers.LSTMv1.#ctor(System.Int32,System.Int32,System.Boolean,System.Boolean,EasyCNTK.Layers.Layer,System.String)">
+            <summary>
+            Создает слой LSTM. 
+            Клеточное состояние (С) имеет независимую размерность, все гейты имеют размерность выхода (H), масштабирование производится непосредвенно при записи в клеточное состояние.
+            Вход (X[t]) масштабируется к выходу (H[t-1]), ячейка памяти (С) масштабируется к выходу (H). 
+            </summary>
+            <param name="lstmOutputDim">Разрядность выходного слоя (H)</param>        
+            <param name="lstmCellDim">Разрядность внутреннего слоя ячейки памяти, если 0 - устанавливается разрядность выходного слоя (C)</param>
+            <param name="useShortcutConnections">Если true, использовать проброс входа параллельно слою. По умолчанию включено.</param>
+            <param name="selfStabilizerLayer">Слой, реализующий самостабилизацию</param>
+            <param name="isLastLstm">Указывает, будет ли это последний из слоев LSTM (следующие слои в сети нерекуррентные). Для того чтобы стыковать LSTM слои друг за другом, у всех слоев, кроме последнего, нужно установить false</param>
+            <param name="name"></param>
+        </member>
+        <member name="T:EasyCNTK.Layers.Pooling2D">
+            <summary>
+            Реализует пуллинг слой для двумерного вектора
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.Pooling2D.Build(CNTK.Variable,System.Int32,System.Int32,System.Int32,System.Int32,CNTK.PoolingType,System.String)">
+            <summary>
+            Добавляет пуллинг слой для двумерного вектора. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+            </summary>
+            <param name="poolingWindowWidth">Ширина окна пуллинга</param>
+            <param name="poolingWindowHeight">Высота окна пуллинга</param>
+            <param name="hStride">Шаг смещения окна пуллинга по горизонтали (по столбцам матрицы)</param>
+            <param name="vStride">Шаг смещения окна пуллинга по вертикали (по строкам матрицы)</param>
+            <param name="poolingType">Тип пуллинга. Максимальный или средний</param>
+            <param name="name"></param>
+        </member>
+        <member name="M:EasyCNTK.Layers.Pooling2D.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,CNTK.PoolingType,System.String)">
+            <summary>
+            Создает пуллинг слой для двумерного вектора. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+            </summary>
+            <param name="poolingWindowWidth">Ширина окна пуллинга</param>
+            <param name="poolingWindowHeight">Высота окна пуллинга</param>
+            <param name="hStride">Шаг смещения окна пуллинга по горизонтали (по столбцам матрицы)</param>
+            <param name="vStride">Шаг смещения окна пуллинга по вертикали (по строкам матрицы)</param>
+            <param name="poolingType">Тип пуллинга. Максимальный или средний</param>
+            <param name="name"></param>
+        </member>
+        <member name="T:EasyCNTK.Layers.Residual2">
+            <summary>
+            Реализует остаточный слой с 2 внутренними слоями
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.Residual2.Build(CNTK.Function,System.Int32,EasyCNTK.ActivationFunctions.ActivationFunction,CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Создает остаточный слой с 2 внутренними слоями
+            </summary>        
+            <param name="input">Вход</param>
+            <param name="outputDimension">Разрядность выходного слоя</param>
+            <param name="activationFunction">Функция активации, null если не требуется</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Layers.Residual2.#ctor(System.Int32,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
+            <summary>
+            Создает остаточный слой с 2 внутренними слоями
+            </summary>
+            <param name="outputDimension">Разрядность выходного слоя</param>
+            <param name="activationFunction">Функция активации, null если не требуется</param>
+            <param name="name"></param>
+        </member>
+        <member name="T:EasyCNTK.Layers.SelfStabilization">
+            <summary>
+            Реализует слой самостаблизации для выбора оптимальной скорости обучения. Источник: https://github.com/Microsoft/CNTK/blob/release/latest/Examples/TrainingCSharp/Common/LSTMSequenceClassifier.cs
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Layers.SelfStabilization.Build(CNTK.Function,CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Создает слой самостабилизации для выбора оптимальной скорости обучения.
+            </summary>
+            <param name="input"></param>
+            <param name="device"></param>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Layers.SelfStabilization.#ctor(System.String)">
+            <summary>
+            Создает слой самостабилизации для выбора оптимальной скорости обучения.
+            </summary>
+            <param name="name"></param>
+        </member>
+        <member name="T:EasyCNTK.Learning.DoubleComparer">
+            <summary>
+            Выполняет сравнение двух double чисел с заданной погрешностью
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.DoubleComparer.Epsilon">
+            <summary>
+            Погрешность. Задает минимум, на который должны отличаться два числа, чтобы считаться разными
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.DoubleComparer.#ctor(System.Double)">
+            <summary>
+            Создает экземпляр компаратора
+            </summary>
+            <param name="epsilon">Погрешность. Задает минимум, на который должны отличаться два числа, чтобы считаться разными</param>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.GetRegressionMetrics``1(System.Collections.Generic.IEnumerable{EasyCNTK.Learning.EvaluateItem{``0}})">
+            <summary>
+            Возвращает метрики для задач регрессии. Если целевая переменная многомерная, метрики возвращаются для каждого измерения независимо.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.GetBinaryClassificationMetrics``1(System.Collections.Generic.IEnumerable{EasyCNTK.Learning.EvaluateItem{``0}},System.Double)">
+            <summary>
+            Вычисляет метрики для задач бинарной классификации. 
+            Подразумевается, что выход имеет единичную размерность и метки классов закодированы в 1 для True наблюдений, в 0 для False.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="threshold">Пороговое значение для действительного значения выхода нейросети, ниже которого класс определяется как False. </param>
+            /// <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.GetOneLabelClassificationMetrics``1(System.Collections.Generic.IEnumerable{EasyCNTK.Learning.EvaluateItem{``0}})">
+            <summary>
+            Вычисляет метрики для задач одноклассовой классификации. 
+            Подразумевается, что выход закодирован в One-Hot-Encoding(и обернут в Softmax, хотя возможно использовать <seealso cref="T:EasyCNTK.ActivationFunctions.Sigmoid"/>, <seealso cref="T:EasyCNTK.ActivationFunctions.HardSigmoid"/>), в ином случае метрика рассчитается некорректно.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.GetMultiLabelClassificationMetrics``1(System.Collections.Generic.IEnumerable{EasyCNTK.Learning.EvaluateItem{``0}},System.Double)">
+            <summary>
+            Вычисляет метрики для задач многоклассовой классификации.
+            Подразумевается, что выход закодирован в One-Hot-Encoding(и обернут в <seealso cref="T:EasyCNTK.ActivationFunctions.Sigmoid"/>, <seealso cref="T:EasyCNTK.ActivationFunctions.HardSigmoid"/> и т.п.), в ином случае метрика рассчитается некорректно.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="thershold">Пороговое значение для действительного значения выхода нейросети, ниже которого класс не распознается. Другими словами - это минимальная вероятность, которую должен выдать классификатор для конкретного класса, чтобы этот класс был учтен как распознанный.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(CNTK.Function,System.Collections.Generic.IEnumerable{EasyCNTK.Minibatch},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="testData">Тестовые данные. Каждый минипакет должен содержать 1 тестовый пример.</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,System.Collections.Generic.IEnumerable{CNTK.Value},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - пользовательский). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="data">Набор примеров для которых вычисляется выход</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,System.Collections.Generic.IEnumerable{``0[]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="data">Набор примеров для которых вычисляется выход</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,System.Collections.Generic.IEnumerable{``0[0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,CNTK.Value,CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - пользовательский). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,``0[],CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,System.Collections.Generic.IList{``0[]},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,``0[0:,0:],CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,System.Collections.Generic.IEnumerable{CNTK.Value},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели с несколькими выходами для каждого из входных примеров (пример - пользовательский). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="data">Набор примеров для которых вычисляется выход</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,System.Collections.Generic.IEnumerable{``0[]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="data">Набор примеров для которых вычисляется выход</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,System.Collections.Generic.IEnumerable{``0[0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,CNTK.Value,CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - пользовательский). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,``0[],CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,System.Collections.Generic.IList{``0[]},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,``0[0:,0:],CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{EasyCNTK.Minibatch},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="testData">Тестовые данные. Каждый минипакет должен содержать 1 тестовый пример.</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[]},System.Int32,CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="testData">Набор тестовых данных для обучения. Каждый пример должен содержать в начале массива признаки размерностью inputDim, а в конце метки классов размерностью outputDim.
+            Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
+            <param name="inputDim">Размерность признаков (разрядность)</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},System.Collections.Generic.IEnumerable{``0[]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор тестовых последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+            <param name="labels">Набор тестовых меток. Размерность меток должна быть одинаковая.</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор тестовых данных</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{EasyCNTK.MinibatchMultiOutput},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="testData">Тестовые данные</param>
+            <param name="device">Устройство для расчетов</param>       
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[]},System.Collections.Generic.IEnumerable{``0[][]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор признаков.</param>
+            <param name="labels">Набор меток. Для каждого выхода модели.</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},System.Collections.Generic.IEnumerable{``0[][]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор тестовых последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+            <param name="labels">Набор меток.  Для каждого выхода модели.</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выход модели для каждого из тестовых примеров.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор тестовых данных</param>
+            <param name="labels">Набор меток.  Для каждого выхода модели.</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="minibatchSize">Размер минипакета для оценки. Использование позволяет оценивать данные пачками(параллельно), не тратя ресурсы на пересылку данных в память. Оптимальный размер зависит от объема данных, доступной памяти GPU (лучшее ускорение).</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},CNTK.Value,CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - пользовательский). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{CNTK.Value},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="data">Набор примеров для которых вычисляется выход</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="data">Набор примеров для которых вычисляется выход</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},``0[],CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IList{``0[]},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},``0[0:,0:],CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},CNTK.Value,CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - пользовательский). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{CNTK.Value},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="data">Набор примеров для которых вычисляется выход</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="data">Набор примеров для которых вычисляется выход</param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - последовательность). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+            <summary>
+            Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},``0[],CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера. (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IList{``0[]},CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - последовательность). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},``0[0:,0:],CNTK.DeviceDescriptor,System.String)">
+            <summary>
+            Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="device">Устройство для расчетов</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyCNTK.Learning.EvaluateItem`1">
+            <summary>
+            Представляет реальные и вычисленные моделью значения выхода
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="P:EasyCNTK.Learning.EvaluateItem`1.ExpectedValue">
+            <summary>
+            Реальные значения, ожидаемые на выходе
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.EvaluateItem`1.EvaluatedValue">
+            <summary>
+            Вычисленные моделью значения на выходе
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Learning.FeatureStatistic">
+            <summary>
+            Представляет сбоную статистику по переменной в наборе данных
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.FeatureName">
+            <summary>
+            Имя свойства класса, представляющего признак/переменную
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.Average">
+            <summary>
+            Среднее значение
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.Median">
+            <summary>
+            Медиана
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.Min">
+            <summary>
+            Минимальное значение переменной
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.Max">
+            <summary>
+            Максимальное значение переменной
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.StandardDeviation">
+            <summary>
+            Среднеквадратичное отклонение
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.Variance">
+            <summary>
+            Дисперсия
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.MeanAbsoluteDeviation">
+            <summary>
+            Среднее абсолютное отклонение
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FeatureStatistic.UniqueValues">
+            <summary>
+            Упорядоченный список уникальных значений переменной. Key - значение переменной, Value - количество переменных с таким значением
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.FeatureStatistic.#ctor(System.Double)">
+            <summary>
+            Инициализирует класс
+            </summary>
+            <param name="epsilon">Погрешность. Задает минимум, на который должны отличаться два числа, чтобы считаться разными</param>
+        </member>
+        <member name="T:EasyCNTK.Learning.FitResult">
+            <summary>
+            Представляет результат одной сессии обучения
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FitResult.LossError">
+            <summary>
+            Средняя ошибка функции потерь по результатам сессии обучения
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FitResult.EvaluationError">
+            <summary>
+            Средняя ошибка оценочной функции по результатам сессии обучения
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FitResult.Duration">
+            <summary>
+            Продолжительность сессии обучения
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FitResult.EpochCount">
+            <summary>
+            Количество эпох обучения
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FitResult.LossCurve">
+            <summary>
+            Кривая ошибок функции потерь в процессе обучения
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.FitResult.EvaluationCurve">
+            <summary>
+            Кривая ошибок оценочной функции в процессе обучения
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.Shuffle``1(System.Collections.Generic.IList{``0},System.Int32)">
+            <summary>
+            Перемешивает данные в коллекции.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="source"></param>
+            <param name="seed">Начальное значение для генератора случайных чисел (<seealso cref="T:System.Random"/>), если 0 - используется генератор по умолчанию </param>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.Split``1(System.Collections.Generic.IList{``0},System.Double,System.Collections.Generic.IList{``0}@,System.Collections.Generic.IList{``0}@,System.Boolean,System.Int32)">
+            <summary>
+            Разбивает набор данных на 2 части в заданном соотношении
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="source">Исходный набор данных</param>
+            <param name="percent">Размер первого набора данных в процентах от исходной коллекции. Должен быть в диапазоне [0;1].</param>
+            <param name="first">Первый набор данных</param>
+            <param name="second">Второй набор данных</param>
+            <param name="randomizeSplit">Случайное разбиение (данные для наборов берутся случайно из всей выборки)</param>        
+            <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.SplitBalanced``2(System.Collections.Generic.IList{``0},System.Double,System.Func{``0,``1},System.Collections.Generic.IEqualityComparer{``1},System.Collections.Generic.IList{``0}@,System.Collections.Generic.IList{``0}@,System.Boolean,System.Int32)">
+            <summary>
+            Разбивает набор данных на 2 части в заданном соотношении, сохраняя исходное распределение классов неизменным для обоих коллекций. Подразумевает, что один пример содержит один класс (Задача одноклассовой классификации).
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="U"></typeparam>
+            <param name="source">Исходный набор данных</param>
+            <param name="percent">Размер первого набора данных в процентах от исходной коллекции. Должен быть в диапазоне [0;1].</param>
+            <param name="labelSelector">Селектор, извлекающий метку класса</param>
+            <param name="labelComparer">Компаратор, используется для определения равенства меток двух классов</param>
+            <param name="first">Первый набор данных</param>
+            <param name="second">Второй набор данных</param>
+            <param name="randomizeSplit">>Случайное разбиение (данные для наборов берутся случайно из всей выборки)</param>
+            <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.SplitBalanced``2(System.Collections.Generic.IList{``0},System.Double,System.Func{``0,``1},System.Collections.Generic.IList{``0}@,System.Collections.Generic.IList{``0}@,System.Boolean,System.Int32)">
+            <summary>
+            Разбивает набор данных на 2 части в заданном соотношении, сохраняя исходное распределение классов неизменным для обоих коллекций.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="U"></typeparam>
+            <param name="source">Исходный набор данных</param>
+            <param name="percent">Размер первого набора данных в процентах от исходной коллекции. Должен быть в диапазоне [0;1].</param>
+            <param name="labelSelector">Селектор, извлекающий метку класса</param>
+            <param name="first">Первый набор данных</param>
+            <param name="second">Второй набор данных</param>
+            <param name="randomizeSplit">>Случайное разбиение (данные для наборов берутся случайно из всей выборки)</param>
+            <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.MakeSimilarSamplesBySMOTE``1(System.Collections.Generic.IList{``0[]},System.Int32,System.Int32,System.Int32)">
+            <summary>
+            На основе заданного множества примеров одного класса, создает необходимое количество синтетических примеров этого же класса, используя метод Synthetic Minority Over-sampling Technique (SMOTE)
+            Для корректной генерации входные данные должны быть нормализованы.
+            </summary>
+            <typeparam name="T">Тип элементов, поддеживаются все типы, реализующие <seealso cref="T:System.IConvertible"/></typeparam>
+            <param name="source"></param>
+            <param name="similarSampleCount">Количество похожих синтетических примеров, которое требуется создать</param>
+            <param name="nearestNeighborsCount">Количество ближаших соседей, используемых для геренации синтетического примера</param>
+            <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.ComputeStatisticForCollection``1(System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0}},System.Double)">
+            <summary>
+            Вычисляет статистику для каждого элемента коллекции. Допускает потерю точности при вычислении значений вне диапазона <seealso cref="T:System.Double"/>
+            </summary>
+            <typeparam name="T">Поддерживается: <seealso cref="T:System.Int32"/>, <seealso cref="T:System.Int64"/>, <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/>, <seealso cref="T:System.Decimal"/></typeparam>
+            <param name="source">Набор данных. Массивы с одинаковой длинной</param>
+            <param name="epsilon">Разница, на которую должны отличаться 2 числа с плавающей точкой, чтобы считаться разными</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.ComputeStatisticForObject``1(System.Collections.Generic.IEnumerable{``0},System.Double,System.String[])">
+            <summary>
+            Вычисляет статистику по объекту для каждого свойства типа: <seealso cref="T:System.Int32"/>, <seealso cref="T:System.Int64"/>, <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/>, <seealso cref="T:System.Decimal"/>. Допускает потерю точности при вычислении значений вне диапазона <seealso cref="T:System.Double"/>
+            </summary>
+            <typeparam name="TModel"></typeparam>
+            <param name="source">Набор данных</param>
+            <param name="withoutProperties">Свойства, для которых не нужно рассчитывать статистику</param>
+            <param name="epsilon">Разница, на которую должны отличаться 2 числа с плавающей точкой, чтобы считаться разными</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.MinMaxNormalize``1(System.Collections.Generic.IList{``0},``0,``0,System.Boolean,System.Collections.Generic.IList{System.String})">
+            <summary>
+            Выполняет нормализацию каждого выбранного свойства по формуле: Xnorm = X / (|Xmax-Xmin|) (приводит Xnorm к диапазону [0;1]). Изменения затрагивают и исходную коллекцию. Поддерживаются типы свойств: <seealso cref="T:System.Int32"/>, <seealso cref="T:System.Int64"/>, <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/>, <seealso cref="T:System.Decimal"/>
+            </summary>
+            <typeparam name="TModel">Тип класса, для свойств которого требуется произвести нормализацию</typeparam>
+            <param name="source">Исходная коллекция</param>
+            <param name="modelMaxes">Экземпляр типа, который инициализрован максимумами соответсующих значений</param>
+            <param name="modelMins">Экземпляр типа, который инициализрован минимумами соответсующих значений</param>
+            <param name="propertyNames">Имена свойств, для которых требуется выполнить нормализацию. Если null или пустой, выполняет нормализацию для всех поддерживаемых свойств</param>
+            <param name="centerOnXaxis">Указывает, требуется ли приводить нормированное значение к диапазону [-1;1]. В случае если значение элемента из исходной коллекции больше/меньше максимума/минимума заданными соответсвующими параметрами, то возможен выход за диапазон [-1;1]</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.MinMaxNormalize``1(System.Collections.Generic.IList{``0},System.Boolean,System.Collections.Generic.IList{System.String})">
+            <summary>
+            Выполняет нормализацию каждого выбранного свойства по формуле: Xnorm = X / (|Xmax-Xmin|) (приводит Xnorm к диапазону [0;1]). Изменения затрагивают и исходную коллекцию. Поддерживаются типы свойств: <seealso cref="T:System.Int32"/>, <seealso cref="T:System.Int64"/>, <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/>, <seealso cref="T:System.Decimal"/> 
+            </summary>
+            <typeparam name="TModel"></typeparam>
+            <param name="source">Исходная коллекция</param>
+            <param name="centerOnXaxis">Указывает, требуется ли приводить нормированное значение к диапазону [-1;1].</param>
+            <param name="propertyNames">Имена свойств, для которых требуется выполнить нормализацию. Если null или пустой, выполняет нормализацию для всех поддерживаемых свойств</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.FitMultiOutput(CNTK.Function,System.Func{System.Int32,System.Collections.Generic.IEnumerable{EasyCNTK.MinibatchMultiOutput}},EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Поддерживает реккурентные сети.
+            </summary>
+            <param name="source"></param>
+            <param name="trainDataSelector">Селектор, позволяющий указать для каждой эпохи свой набор данных для обучения.</param>
+            <param name="lossFunctions">Функция потерь</param>
+            <param name="evaluationFunctions">Оценочная функция</param>
+            <param name="optimizers">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>
+            <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+            <param name="device">Устройство для обучения</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit(CNTK.Function,System.Func{System.Int32,System.Collections.Generic.IEnumerable{EasyCNTK.Minibatch}},EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Поддерживает реккурентные сети.
+            </summary>
+            <param name="source"></param>
+            <param name="trainDataSelector">Селектор, позволяющий указать для каждой эпохи свой набор данных для обучения.</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>
+            <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+            <param name="device">Устройство для обучения</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Func{System.Int32,System.Collections.Generic.IEnumerable{EasyCNTK.Minibatch}},EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Поддерживает реккурентные сети.
+            </summary>
+            <param name="source"></param>
+            <param name="trainDataSelector">Селектор, позволяющий указать для каждой эпохи свой набор данных для обучения.</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>
+            <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+            <param name="device">Устройство для обучения</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{EasyCNTK.Minibatch},EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,CNTK.DeviceDescriptor,System.Boolean,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Поддерживает реккурентные сети.
+            </summary>
+            <param name="source"></param>
+            <param name="trainData">Набор данных для обучения.</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>
+            <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+            <param name="device">Устройство для обучения</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IList{``0[]},System.Int32,System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Не применим для обучения реккуретных сетей.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="trainData">Набор данных для обучения. Каждый пример должен содержать в начале массива признаки размерностью inputDim, а в конце метки классов размерностью outputDim.
+            Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
+            <param name="inputDim">Размерность признаков (разрядность)</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>
+            <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IList{System.Collections.Generic.IList{``0[]}},System.Collections.Generic.IList{``0[]},System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+            <summary> 
+            Обучает реккурентную модель.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+            <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>
+            <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IList{``0[0:,0:]},System.Collections.Generic.IList{``0[]},System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+            <summary>
+            Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор данных для обучения.</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>  
+            <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[]},System.Int32,System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Не применим для обучения реккуретных сетей.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="trainData">Набор данных для обучения. Каждый пример должен содержать в начале массива признаки размерностью inputDim, а в конце метки классов размерностью outputDim.
+            Например inputDim = 3, outputDim = 2: [f1, f2, f3, l1, l2]</param>
+            <param name="inputDim">Размерность признаков (разрядность)</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>       
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},System.Collections.Generic.IEnumerable{``0[]},System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean})">
+            <summary>
+            Обучает реккурентную модель.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+            <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>        
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[]},System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+            <summary>
+            Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор данных для обучения.</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunction">Функция потерь</param>
+            <param name="evaluationFunction">Оценочная функция</param>
+            <param name="optimizer">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>          
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Func{System.Int32,System.Collections.Generic.IEnumerable{EasyCNTK.MinibatchMultiOutput}},EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Поддерживает реккурентные сети.
+            </summary>
+            <param name="source"></param>
+            <param name="trainDataSelector">Селектор, позволяющий указать для каждой эпохи свой набор данных для обучения.</param>
+            <param name="lossFunctions">Функция потерь</param>
+            <param name="evaluationFunctions">Оценочная функция</param>
+            <param name="optimizers">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>
+            <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+            <param name="device">Устройство для обучения</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{EasyCNTK.MinibatchMultiOutput},EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,CNTK.DeviceDescriptor,System.Boolean,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Поддерживает реккурентные сети.
+            </summary>
+            <param name="source"></param>
+            <param name="trainData">Набор данных для обучения.</param>
+            <param name="lossFunctions">Функция потерь</param>
+            <param name="evaluationFunctions">Оценочная функция</param>
+            <param name="optimizers">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>
+            <param name="isReccurentModel">Указывает, что требуется обучать реккурентную модель</param>
+            <param name="device">Устройство для обучения</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IList{``0[]},System.Collections.Generic.IList{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+            <summary>
+            Обучает модель. Не применим для обучения реккуретных сетей.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор данных для обучения.</param>       
+            <param name="labels">Набор меток для каждой головы(выхода сети).</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunctions">Функция потерь</param>
+            <param name="evaluationFunctions">Оценочная функция</param>
+            <param name="optimizers">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>
+            <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IList{System.Collections.Generic.IList{``0[]}},System.Collections.Generic.IList{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+            <summary> 
+            Обучает реккурентную модель.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+            <param name="labels">Набор меток для каждой головы(выхода сети).</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunctions">Функция потерь</param>
+            <param name="evaluationFunctions">Оценочная функция</param>
+            <param name="optimizers">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>
+            <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IList{``0[0:,0:]},System.Collections.Generic.IList{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+            <summary>
+            Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор данных для обучения.</param>
+            <param name="labels">Набор меток для каждой головы(выхода сети).</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunctions">Функция потерь</param>
+            <param name="evaluationFunctions">Оценочная функция</param>
+            <param name="optimizers">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>  
+            <param name="shuffleSampleInMinibatchesPerEpoch">Указывает, что необходимо каждую эпоху перемешивать обучающие примеры для формирования новых минипакетов.</param>
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[]},System.Collections.Generic.IEnumerable{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+             <summary>
+             Обучает модель. Не применим для обучения реккуретных сетей.
+             </summary>
+             <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+             <param name="source"></param>       
+            <param name="features">Набор данных для обучения.</param>
+            <param name="labels">Набор меток для каждой головы(выхода сети).</param>
+             <param name="minibatchSize">Размер минипакета</param>
+             <param name="lossFunctions">Функция потерь</param>
+             <param name="evaluationFunctions">Оценочная функция</param>
+             <param name="optimizers">Оптимизатор, используемый для обучения</param>
+             <param name="epochCount">Количество эпох обучения</param>        
+             <param name="device">Устройство для обучения</param>       
+             <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+             <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+             Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+             Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+             <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{``0[]}},System.Collections.Generic.IEnumerable{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+            <summary>
+            Обучает реккурентную модель.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор последовательностей (признаков). Каждая последовательность может быть переменной длинны, но одинаковой размерности (массивы из которых состоит последовательность, должны иметь одинаковую длину)</param>
+            <param name="labels">Набор меток для каждой головы(выхода сети).</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunctions">Функция потерь</param>
+            <param name="evaluationFunctions">Оценочная функция</param>
+            <param name="optimizers">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>        
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean})">
+            <summary>
+            Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="source"></param>
+            <param name="features">Набор данных для обучения.</param>
+            <param name="labels">Набор меток для каждой головы(выхода сети).</param>
+            <param name="minibatchSize">Размер минипакета</param>
+            <param name="lossFunctions">Функция потерь</param>
+            <param name="evaluationFunctions">Оценочная функция</param>
+            <param name="optimizers">Оптимизатор, используемый для обучения</param>
+            <param name="epochCount">Количество эпох обучения</param>        
+            <param name="device">Устройство для обучения</param>          
+            <param name="ruleUpdateLearningRate">Правило обновления скорости обучения. Входные параметры: эпоха, текущая скорость обучения. Выходные: новая скорость обучения.</param>
+            <param name="actionPerEpoch">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyCNTK.Learning.Metrics.BinaryClassificationMetrics">
+            <summary>
+            Метрики оценки бинарной классификации
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Learning.Metrics.ClassItem">
+            <summary>
+            Содержит дополнительные метрики классификации по конкретному классу
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.Metrics.ClassItem.Index">
+             <summary>
+             Индекс позиции в выходном векторе модели, закрепленной за определенным классом
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.Metrics.ClassItem.Precision">
+            <summary>
+            Точность, с которой модель определяет этот класс. Вычисляется по формуле: точность = [количество верно определенных примеров этого класса] / [количество примеров классифицированных как этот класс]
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.Metrics.ClassItem.Recall">
+            <summary>
+            Полнота, с которой модель определяет этот класс. Вычисляется по формуле: полнота = [количество верно определенных примеров этого класса] / [количество всех примеров этого класса]
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.Metrics.ClassItem.F1Score">
+            <summary>
+            Средняя гармоника между <seealso cref="P:EasyCNTK.Learning.Metrics.ClassItem.Precision"/> и <seealso cref="P:EasyCNTK.Learning.Metrics.ClassItem.Recall"/>. Вычисляется по формуле: F1Score = 2 * Precision * Recall / (Precision + Recall)
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.Learning.Metrics.ClassItem.Fraction">
+            <summary>
+            Доля примеров данного класса во всем датасете
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Learning.Metrics.MultiLabelClassificationMetrics">
+            <summary>
+            Метрики оценки многоклассовой классификации
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Learning.Metrics.OneLabelClassificationMetrics">
+            <summary>
+            Метрики оценки одноклассовой классификации
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Learning.Metrics.RegressionMetrics">
+            <summary>
+            Метрики оценки регрессии
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.AdaDelta">
+            <summary>
+            Оптимизатор AdaDelta. Улучшенная версия <seealso cref="T:EasyCNTK.Learning.Optimizers.AdaGrad"/>
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.Optimizers.AdaDelta.#ctor(System.Double,System.Int32,System.Double,System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Инициализирует оптимизатор AdaDelta
+            </summary>
+            <param name="learningRate">Скорость обучения</param>
+            <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
+            <param name="epsilon">Константа для стабилизации(защита от деления на 0). Параметр "е" - в формуле правила обновления параметров: http://ruder.io/optimizing-gradient-descent/index.html#adadelta</param>
+            <param name="rho">Экспоненциальный коэффициент сглаживания для каждого минипакета.</param>
+            <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
+            <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
+            <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
+            По умолчанию установлен в <seealso cref="F:System.Double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.AdaGrad">
+            <summary>
+            Оптимизатор AdaGrad. Хорош для работы с разряженными данными.
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.Optimizers.AdaGrad.#ctor(System.Double,System.Int32,System.Double,System.Double,System.Double)">
+            <summary>
+            Инициализирует оптимизатор AdaGrad
+            </summary>
+            <param name="learningRate">Скорость обучения</param>
+            <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
+            <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
+            <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
+            <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
+            По умолчанию установлен в <seealso cref="F:System.Double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.Adam">
+            <summary>
+            Оптимизатор Adam. Объединяет и улучшает в себе преимущества <seealso cref="T:EasyCNTK.Learning.Optimizers.RMSProp"/>, <seealso cref="T:EasyCNTK.Learning.Optimizers.AdaDelta"/>, <seealso cref="T:EasyCNTK.Learning.Optimizers.AdaGrad"/>
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.Optimizers.Adam.#ctor(System.Double,System.Double,System.Int32,System.Double,System.Double,System.Double,System.Double,System.Double,System.Boolean)">
+            <summary>
+            Инициализирует оптимизатор Adam
+            </summary>
+            <param name="learningRate">Скорость обучения</param>
+            <param name="momentum">Момент</param>
+            <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
+            <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
+            <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
+            <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
+            По умолчанию установлен в <seealso cref="F:System.Double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>
+            <param name="epsilon">Константа для стабилизации(защита от деления на 0). Параметр "е" - в формуле правила обновления параметров: http://ruder.io/optimizing-gradient-descent/index.html#adam </param>
+            <param name="varianceMomentumSchedule">"Beta2" параметр в формуле вычисления момента: http://ruder.io/optimizing-gradient-descent/index.html#adam</param>
+            <param name="unitGain">Указывает, что момент используется в режиме усиления</param>        
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.Adamax">
+            <summary>
+            Оптимизатор Adamax. Вариация <seealso cref="T:EasyCNTK.Learning.Optimizers.Adam"/>
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.Optimizers.Adamax.#ctor(System.Double,System.Double,System.Int32,System.Double,System.Double,System.Double,System.Double,System.Double,System.Boolean)">
+            <summary>
+            Инициализирует оптимизатор Adamax
+            </summary>
+            <param name="learningRate">Скорость обучения</param>
+            <param name="momentum">Момент</param>
+            <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
+            <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
+            <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
+            <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
+            По умолчанию установлен в <seealso cref="F:System.Double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>
+            <param name="epsilon">Константа для стабилизации(защита от деления на 0). Параметр "е" - в формуле правила обновления параметров: http://ruder.io/optimizing-gradient-descent/index.html#adam </param>
+            <param name="varianceMomentumSchedule">"Beta2" параметр в формуле вычисления момента: http://ruder.io/optimizing-gradient-descent/index.html#adam</param>
+            <param name="unitGain">Указывает, что момент используется в режиме усиления</param>        
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.FSAdaGrad">
+            <summary>
+            Оптимизатор FSAdaGrad. Аналог <seealso cref="T:EasyCNTK.Learning.Optimizers.Adam"/>
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.Optimizers.FSAdaGrad.#ctor(System.Double,System.Double,System.Int32,System.Double,System.Double,System.Double,System.Double,System.Boolean)">
+            <summary>
+            Инициализирует оптимизатор FSAdaGrad
+            </summary>
+            <param name="learningRate">Скорость обучения</param>
+            <param name="momentum">Момент</param>
+            <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
+            <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
+            <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
+            <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
+            По умолчанию установлен в <seealso cref="F:System.Double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>       
+            <param name="varianceMomentumSchedule">"Beta2" параметр в формуле вычисления момента: http://ruder.io/optimizing-gradient-descent/index.html#adam (аналогично для FSAdaGrad)</param>
+            <param name="unitGain">Указывает, что момент используется в режиме усиления</param>   
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.MomentumSGD">
+            <summary>
+            Оптмизатор. Реализует стохастический градиентный спуск c моментом (MomentumSGD)
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.Optimizers.MomentumSGD.#ctor(System.Double,System.Double,System.Int32,System.Double,System.Double,System.Double,System.Boolean)">
+            <summary>
+            Инициализирует оптимизатор MomentumSGD
+            </summary>
+            <param name="learningRate">Скорость обучения</param>
+            <param name="momentum">Момент</param>
+            <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
+            <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
+            <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
+            <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
+            По умолчанию установлен в <seealso cref="F:System.Double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>
+            <param name="unitGain">Указывает, что момент используется в режиме усиления</param> 
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.Optimizer">
+            <summary>
+            Базовый класс для реализации оптимизаторов
+            </summary>
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.RMSProp">
+            <summary>
+            Оптимизатор RMSProp. Аналог <seealso cref="T:EasyCNTK.Learning.Optimizers.AdaDelta"/>. Первоисточник: http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.Optimizers.RMSProp.#ctor(System.Double,System.Int32,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Инициализирует оптимизатор RMSProp 
+            </summary>
+            <param name="learningRate">Скорость обучения</param>
+            <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
+            <param name="gamma">Коэффициент передачи для предыдущего градиента. Должен быть в пределах [0;1]</param>
+            <param name="increment">Коэффициент увеличения скорости обучения. Должен быть больше 1. По умолчанию увеличение на 5%</param>
+            <param name="decrement">Коэффициент уменьшения скорости обучения. Должен быть в пределах [0;1]. По умолчанию уменьшение на 5%</param>
+            <param name="max">Максимальная скорость обучения. Должна быть больше 0 и min</param>
+            <param name="min">Минимальная скорость обучения. Должна быть больше 0 и меньше max</param>
+            <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
+            <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
+            <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
+            По умолчанию установлен в <seealso cref="F:System.Double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>
+        </member>
+        <member name="T:EasyCNTK.Learning.Optimizers.SGD">
+            <summary>
+            Оптмизатор. Реализует стохастический градиентный спуск (SGD)
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Learning.Optimizers.SGD.#ctor(System.Double,System.Int32,System.Double,System.Double,System.Double)">
+            <summary>
+            Инициализирует оптимизатор Стохастического градиентного спуска (SGD)
+            </summary>
+            <param name="learningRate">Скорость обучения</param>
+            <param name="minibatchSize">Размер минипакета, требуется CNTK чтобы масштабировать параметры оптимизатора для более эффективного обучения. Если равен 0, то будет использован размер митибатча при обучении.</param>
+            <param name="l1RegularizationWeight">Коэффициент L1 нормы, если 0 - регуляризация не применяется</param>
+            <param name="l2RegularizationWeight">Коэффициент L2 нормы, если 0 - регуляризация не применяется</param>
+            <param name="gradientClippingThresholdPerSample">Порог отсечения градиента на каждый пример обучения, используется преимущественно для борьбы с взрывным градиентом в глубоких реккурентных сетях.
+            По умолчанию установлен в <seealso cref="F:System.Double.PositiveInfinity"/> - отсечение не используется. Для использования установите необходимый порог.</param>
+        </member>
+        <member name="T:EasyCNTK.Learning.Reinforcement.ActorCriticTeacher`1">
+            <summary>
+            Реализует механизм обучения методом Actor Critic
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:EasyCNTK.Learning.Reinforcement.ActorCriticTeacher`1.Teach(EasyCNTK.SequentialMultiOutput{`0},System.Int32,System.Int32,System.Int32,System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.Double,System.Double)">
+            <summary>
+            Обучает агента, модель которого представлена сетью прямого распространения (не рекуррентной) с двумя выходами(не путать с размерностью выхода). Используется в случае когда модель оперирует только текущим состоянием среды, не учитывая предыдущие состояния.
+            </summary>
+            <param name="agent">Агент для обучения, сеть заданной архитектуры с двумя выходами: 1 выход - действия агента, 2 выход - средняя награда при выполнении действия(одно число)</param>
+            <param name="iterationCount">Количество итераций обучения (эпох)</param>
+            <param name="rolloutCount">Количество прогонов(в случае игры - прохождений уровня до окончания игры <seealso cref="P:EasyCNTK.Learning.Reinforcement.Environment.IsTerminated"/>), которое будет пройдено прежде чем обновятся веса.
+            Можно интерпретировать как количество обучающих данных на одну эпоху.</param>
+            <param name="minibatchSize">Размер минибатча для обучения</param>
+            <param name="actionPerIteration">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="gamma">Коэффициент затухания награды(reward), при вычислении Discounted reward</param>
+            <param name="epsilon">Величина, на которую должны отличаться два вещественных числа, чтобы считаться разными. Необходимо для вычисления похожих состояний среды.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.Reinforcement.ActorCriticTeacher`1.Teach(EasyCNTK.SequentialMultiOutput{`0},System.Int32,System.Int32,System.Int32,System.Int32,System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.Double,System.Double)">
+            <summary>
+            Обучает агента, модель которого представлена рекуррентной сетью с двумя выходами(не путать с размерностью выхода). Используется в случае когда модель оперирует цепочкой состояний среды.
+            </summary>
+            <param name="agent">Агент для обучения, сеть заданной архитектуры с двумя выходами: 1 выход - действия агента, 2 выход - средняя награда при выполнении действия(одно число)</param>
+            <param name="iterationCount">Количество итераций обучения (эпох)</param>
+            <param name="rolloutCount">Количество прогонов(в случае игры - прохождений уровня до окончания игры <seealso cref="P:EasyCNTK.Learning.Reinforcement.Environment.IsTerminated"/>), которое будет пройдено прежде чем обновятся веса.
+            Можно интерпретировать как количество обучающих данных на одну эпоху.</param>
+            <param name="minibatchSize">Размер минибатча для обучения</param>
+            <param name="sequenceLength">Длина последовательности: цепочка из предыдущих состояних среды на каждом действии.</param>
+            <param name="actionPerIteration">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="gamma">Коэффициент затухания награды(reward), при вычислении Discounted reward</param>
+            <param name="epsilon">Величина, на которую должны отличаться два вещественных числа, чтобы считаться разными. Необходимо для вычисления похожих состояний среды.</param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyCNTK.Learning.Reinforcement.AgentTeacher`1">
+            <summary>
+            Базовый класс для создания учителей, содержит определение среды и вспомогательные методы для вычисления промежуточных результатов
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="T:EasyCNTK.Learning.Reinforcement.PolicyGradientsTeacher`1">
+            <summary>
+            Реализует механизм обучения методом Policy Gradients
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:EasyCNTK.Learning.Reinforcement.PolicyGradientsTeacher`1.Teach(EasyCNTK.Sequential{`0},System.Int32,System.Int32,System.Int32,System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.Double)">
+            <summary>
+            Обучает агента, модель которого представлена сетью прямого распространения (не рекуррентной). Используется в случае когда модель оперирует только текущим состоянием среды, не учитывая предыдущие состояния.
+            </summary>
+            <param name="agent">Агент для обучения, сеть заданной архитектуры</param>
+            <param name="iterationCount">Количество итераций обучения (эпох)</param>
+            <param name="rolloutCount">Количество прогонов(в случае игры - прохождений уровня до окончания игры <seealso cref="P:EasyCNTK.Learning.Reinforcement.Environment.IsTerminated"/>), которое будет пройдено прежде чем обновятся веса.
+            Можно интерпретировать как количество обучающих данных на одну эпоху.</param>
+            <param name="minibatchSize">Размер минибатча для обучения</param>
+            <param name="actionPerIteration">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="gamma">Коэффициент затухания награды(reward), при вычислении Discounted reward</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.Reinforcement.PolicyGradientsTeacher`1.Teach(EasyCNTK.Sequential{`0},System.Int32,System.Int32,System.Int32,System.Int32,System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.Double)">
+            <summary>
+            Обучает агента, модель которого представлена рекуррентной сетью. Используется в случае когда модель оперирует цепочкой состояний среды.
+            </summary>
+            <param name="agent">Агент для обучения, сеть заданной архитектуры</param>
+            <param name="iterationCount">Количество итераций обучения (эпох)</param>
+            <param name="rolloutCount">Количество прогонов(в случае игры - прохождений уровня до окончания игры <seealso cref="P:EasyCNTK.Learning.Reinforcement.Environment.IsTerminated"/>), которое будет пройдено прежде чем обновятся веса.
+            Можно интерпретировать как количество обучающих данных на одну эпоху.</param>
+            <param name="minibatchSize">Размер минибатча для обучения</param>
+            <param name="sequenceLength">Длина последовательности: цепочка из предыдущих состояних среды на каждом действии.</param>
+            <param name="actionPerIteration">Произвольное действие, которое требуется выполнять каждую эпоху. Позволяет прервать процесс тренировки. Входные параметры: эпоха, loss-ошибка, evaluation-ошибка. 
+            Выходные: true - прервать процесс тренировки, false - продолжить тренировку.
+            Используется для осуществления логирования, отображения процесса обучения, сохранения промежуточных чекпоинтов модели и т.п.</param>
+            <param name="gamma">Коэффициент затухания награды(reward), при вычислении Discounted reward</param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyCNTK.LossFunctions.ClassificationError">
+            <summary>
+            Функция ошибки при бинарной, одноклассовой и многоклассовой классификации. Допускается использование с Softmax выходом, при этом создается условие классификации: класс должен иметь вероятность выше заданного порога, иначе он не будет классифицирован.
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.LossFunctions.ClassificationError.#ctor(System.Double)">
+            <summary>
+            Функция ошибки при бинарной, одноклассовой и многоклассовой классификации. Допускается использование с Softmax выходом, при этом создается условие классификации: класс должен иметь вероятность выше заданного порога, иначе он не будет классифицирован.
+            </summary>
+            <param name="threshold">Пороговое значение для действительного значения выхода нейросети, ниже которого класс не распознается. Другими словами - это минимальная вероятность, которую должен выдать классификатор для конкретного класса, чтобы этот класс был учтен как распознанный.</param>
+        </member>
+        <member name="T:EasyCNTK.LossFunctions.SoftmaxClassificationError">
+            <summary>
+            Функция ошибки для одноклассовой классификации при использовании Softmax выхода 
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.LossFunctions.SoftmaxClassificationError.#ctor">
+            <summary>
+            Функция ошибки для одноклассовой классификации при использовании Softmax выхода 
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.LossFunctions.SoftmaxClassificationError.#ctor(System.Int32)">
+            <summary>
+            Функция ошибки для одноклассовой классификации при использовании Softmax выхода 
+            </summary>
+            <param name="numberAxis">Номер оси, вдоль которой применяется оценка классификации</param>
+        </member>
+        <member name="T:EasyCNTK.Sequential`1">
+            <summary>
+            Реализует операции конструирования модели прямого распространения c одним входом и одним выходом
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+        </member>
+        <member name="M:EasyCNTK.Sequential`1.LoadModel(CNTK.DeviceDescriptor,System.String,CNTK.ModelFormat)">
+            <summary>
+            Загружает модель из файла. Так же пытается прочитать описание архитектуры сети: 
+            1) Из файла ArchitectureDescription{имя_файла_модели}.txt 
+            2) Из имени файла модели ориентируясь на наличение [IN] и [OUT] тегов. Если это не удается, то описание конфигурации: Unknown.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="device">Устройство для загрузки</param>
+            <param name="filePath">Путь к файлу модели</param>
+            <param name="modelFormat">Формат модели</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Sequential`1.#ctor(CNTK.DeviceDescriptor,System.Int32[],System.Boolean,System.String,System.Boolean)">
+            <summary>
+            Инициализирeует нейросеть с размерностью входного вектора без слоев
+            </summary>
+            <param name="inputShape">Тензор, описывающий форму входа нейросети (входных данных)</param>
+            <param name="device">Устройство на котором создается сеть</param>
+            <param name="outputIsSequence">Указывает, что выход сети - последовательность.</param>
+            <param name="inputName">Имя входа нейросети</param>
+            <param name="isSparce">Указывает, что вход это вектор One-Hot-Encoding и следует использовать внутреннюю оптимизацию CNTK для увеличения производительности.</param>
+        </member>
+        <member name="M:EasyCNTK.Sequential`1.Add(EasyCNTK.Layers.Layer)">
+            <summary>
+            Добавляет заданный слой (стыкует к последнему добавленному слою)
+            </summary>
+            <param name="layer">Слой для стыковки</param>
+        </member>
+        <member name="M:EasyCNTK.Sequential`1.CreateInputPointForShortcutConnection(System.String)">
+            <summary>
+            Создает входную точку для SC, из которой можно создать соединение к следующим слоям сети. Для одной входной точки должна существовать как минимум одна выходная точка, иначе соединение игнорируется в модели.
+            </summary>
+            <param name="nameShortcutConnection">Название точки входа, из которой будет пробрасываться соединение. В рамках сети должно быть уникальным</param>
+        </member>
+        <member name="M:EasyCNTK.Sequential`1.CreateOutputPointForShortcutConnection(System.String)">
+            <summary>
+            Создает выходную точку для SC, к которой пробрасывается соединение из ранее созданной входной точки. Для одной входной точки может существовать несколько выходных точек.
+            </summary>
+            <param name="nameShortcutConnection">Название точки входа, из которой пробрасывается соединение.</param>
+        </member>
+        <member name="P:EasyCNTK.Sequential`1.Model">
+            <summary>
+            Сконфигурированная модель CNTK
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.Sequential`1.SaveModel(System.String,System.Boolean)">
+            <summary>
+            Сохраняет модель в файл.
+            </summary>
+            <param name="filePath">Путь для сохранения модели (включая имя файла и расширение)</param>
+            <param name="saveArchitectureDescription">Указывает, следует ли сохранить описание архитектуры в отдельном файле: ArchitectureDescription_{имя-файла-модели}.txt</param>
+        </member>
+        <member name="T:EasyCNTK.SequentialMultiOutput`1">
+            <summary>
+            Реализует операции конструирования модели прямого распространения c одним входом и несколькими выходами
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+        </member>
+        <member name="M:EasyCNTK.SequentialMultiOutput`1.LoadModel(CNTK.DeviceDescriptor,System.String,CNTK.ModelFormat)">
+            <summary>
+            Загружает модель из файла. Так же пытается прочитать описание архитектуры сети: 
+            1) Из файла ArchitectureDescription{имя_файла_модели}.txt 
+            2) Из имени файла модели ориентируясь на наличение [IN] и [OUT] тегов. Если это не удается, то описание конфигурации: Unknown.
+            </summary>
+            <typeparam name="T">Тип данных. Поддерживается <seealso cref="T:System.Single"/>, <seealso cref="T:System.Double"/></typeparam>
+            <param name="device">Устройство для загрузки</param>
+            <param name="filePath">Путь к файлу модели</param>
+            <param name="modelFormat">Формат модели</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.SequentialMultiOutput`1.#ctor(CNTK.DeviceDescriptor,System.Int32[],System.Boolean,System.String,System.Boolean)">
+            <summary>
+            Инициализирeует нейросеть с размерностью входного вектора без слоев
+            </summary>
+            <param name="inputShape">Тензор, описывающий форму входа нейросети (входных данных)</param>
+            <param name="device">Устройство на котором создается сеть</param>
+            <param name="outputIsSequence">Указывает, что выход сети - последовательность.</param>
+            <param name="inputName">Имя входа нейросети</param>
+            <param name="isSparce">Указывает, что вход это вектор One-Hot-Encoding и следует использовать внутреннюю оптимизацию CNTK для увеличения производительности.</param>
+        </member>
+        <member name="M:EasyCNTK.SequentialMultiOutput`1.Add(EasyCNTK.Layers.Layer)">
+            <summary>
+            Добавляет заданный слой (стыкует к последнему добавленному слою)
+            </summary>
+            <param name="layer">Слой для стыковки</param>
+        </member>
+        <member name="M:EasyCNTK.SequentialMultiOutput`1.AddToBranch(System.String,EasyCNTK.Layers.Layer)">
+            <summary>
+            Добавляет заданный слой в указанную ветвь (стыкует к последнему добавленному слою ветви)
+            </summary>
+            <param name="branch">Имя ветви. Должно совпадать с одним из имен указанных при вызове <seealso cref="M:EasyCNTK.SequentialMultiOutput`1.SplitToBranches(System.String[])"/></param>
+            <param name="layer">Слой для стыковки</param>
+        </member>
+        <member name="M:EasyCNTK.SequentialMultiOutput`1.SplitToBranches(System.String[])">
+            <summary>
+            Разбивает основную последовательность слоев на несколько ветвей
+            </summary>
+            <param name="branchNames">Названия ветвей, каждой ветви в порядке перечисления будет сопоставлен соответсвующий выход сети. Названия должны быть уникальны.</param>
+        </member>
+        <member name="M:EasyCNTK.SequentialMultiOutput`1.Compile">
+            <summary>
+            Компилирует все созданные ветви в одну модель
+            </summary>
+        </member>
+        <member name="P:EasyCNTK.SequentialMultiOutput`1.Model">
+            <summary>
+            Скомпилированная модель CNTK 
+            </summary>
+        </member>
+        <member name="M:EasyCNTK.SequentialMultiOutput`1.SaveModel(System.String,System.Boolean)">
+            <summary>
+            Сохраняет модель в файл.
+            </summary>
+            <param name="filePath">Путь для сохранения модели (включая имя файла и расширение)</param>
+            <param name="saveArchitectureDescription">Указывает, следует ли сохранить описание архитектуры в отдельном файле: ArchitectureDescription_{имя-файла-модели}.txt</param>
+        </member>
+    </members>
+</doc>

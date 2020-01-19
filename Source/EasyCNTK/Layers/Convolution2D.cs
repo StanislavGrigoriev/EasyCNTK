@@ -14,30 +14,34 @@ using EasyCNTK.ActivationFunctions;
 namespace EasyCNTK.Layers
 {
     /// <summary>
-    /// Реализует сверточный слой для двумерного вектора
+    /// Реализует сверточный слой в двумерном пространстве
     /// </summary>
     public sealed class Convolution2D : Layer
     {
         private int _kernelWidth;
         private int _kernelHeight;
-        private int _outFeatureMapCount;
+        private int _inputChannelsCount;
+        private int _outChannelsCount;
         private int _hStride;
         private int _vStride;
         private Padding _padding;
         private ActivationFunction _activationFunction;
         private string _name;
         /// <summary>
-        /// Добавляет сверточный слой для двумерного вектора. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+        /// Добавляет двумерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
         /// </summary>
-        /// <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице)</param>
-        /// <param name="kernelHeight">Высота ядра свертки (строки в двумерной матрице)</param>
-        /// <param name="outFeatureMapCount">Разрядность выходной ячейки после свертки</param>
+        /// <param name="input"></param>
+        /// <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице/горизонталь изображения)</param>
+        /// <param name="kernelHeight">Высота ядра свертки (строки в двумерной матрице/вертикаль изображения)</param>
+        /// <param name="device">Устройство для расчетов</param>
+        /// <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+        /// <param name="outChannelsCount">Количество каналов выходной ячейки (разрядность выходной ячейки после свертки). Количество каналов <paramref name="inputChannelsCount"/> следующего слоя должно равнятся числу выходных каналов текущего слоя. </param>
         /// <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
         /// <param name="hStride">Шаг спещения окна свертки по горизонтали (по столбцам матрицы)</param>
         /// <param name="vStride">Шаг смещения окна свертки по вертикали (по строкам матрицы)</param>
         /// <param name="padding">Заполнение при использовании сверток</param>
         /// <param name="name"></param>
-        public static Function Build(Variable input, int kernelWidth, int kernelHeight, DeviceDescriptor device, int outFeatureMapCount = 1, int hStride = 1, int vStride = 1, Padding padding = Padding.Valid, ActivationFunction activationFunction = null, string name = "Conv2D")
+        public static Function Build(Variable input, int kernelWidth, int kernelHeight, DeviceDescriptor device, int inputChannelsCount = 1, int outChannelsCount = 1, int hStride = 1, int vStride = 1, Padding padding = Padding.Valid, ActivationFunction activationFunction = null, string name = "Conv2D")
         {
             bool[] paddingVector = null;
             if (padding == Padding.Valid)
@@ -49,8 +53,8 @@ namespace EasyCNTK.Layers
                 paddingVector = new bool[] { true, true, false };
             }
             
-            var convMap = new Parameter(new int[] { kernelWidth, kernelHeight, 1, outFeatureMapCount }, input.DataType, CNTKLib.GlorotUniformInitializer(), device);
-            var convolution = CNTKLib.Convolution(convMap, input, new int[] { hStride, vStride, 1 }, new bool[] { true }, paddingVector);
+            var convMap = new Parameter(new int[] { kernelWidth, kernelHeight, inputChannelsCount, outChannelsCount }, input.DataType, CNTKLib.GlorotUniformInitializer(), device);
+            var convolution = CNTKLib.Convolution(convMap, input, new int[] { hStride, vStride, inputChannelsCount }, new bool[] { true }, paddingVector);
             var activatedConvolution = activationFunction?.ApplyActivationFunction(convolution, device) ?? convolution;
 
             return Function.Alias(activatedConvolution, name);
@@ -58,24 +62,26 @@ namespace EasyCNTK.Layers
 
         public override Function Create(Function input, DeviceDescriptor device)
         {
-            return Build(input, _kernelWidth, _kernelHeight, device, _outFeatureMapCount, _hStride, _vStride, _padding, _activationFunction, _name);
+            return Build(input, _kernelWidth, _kernelHeight, device, _inputChannelsCount, _outChannelsCount, _hStride, _vStride, _padding, _activationFunction, _name);
         }
         /// <summary>
-        /// Добавляет сверточный слой для двумерного вектора. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+        /// Добавляет двумерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
         /// </summary>
         /// <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице)</param>
         /// <param name="kernelHeight">Высота ядра свертки (строки в двумерной матрице)</param>
-        /// <param name="outFeatureMapCount">Разрядность выходной ячейки после свертки</param>
+        /// <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+        /// <param name="outChannelsCount">Разрядность выходной ячейки после свертки</param>
         /// <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
         /// <param name="hStride">Шаг спещения окна свертки по горизонтали (по столбцам матрицы)</param>
         /// <param name="vStride">Шаг смещения окна свертки по вертикали (по строкам матрицы)</param>
         /// <param name="padding">Заполнение при использовании сверток</param>
         /// <param name="name"></param>
-        public Convolution2D(int kernelWidth, int kernelHeight, int outFeatureMapCount = 1, int hStride = 1, int vStride = 1, Padding padding = Padding.Valid, ActivationFunction activationFunction = null, string name = "Conv2D")
+        public Convolution2D(int kernelWidth, int kernelHeight, int inputChannelsCount = 1, int outChannelsCount = 1, int hStride = 1, int vStride = 1, Padding padding = Padding.Valid, ActivationFunction activationFunction = null, string name = "Conv2D")
         {
             _kernelWidth = kernelWidth;
             _kernelHeight = kernelHeight;
-            _outFeatureMapCount = outFeatureMapCount;
+            _inputChannelsCount = inputChannelsCount;
+            _outChannelsCount = outChannelsCount;
             _hStride = hStride;
             _vStride = vStride;
             _padding = padding;
@@ -84,7 +90,7 @@ namespace EasyCNTK.Layers
         }
         public override string GetDescription()
         {
-            return $"Conv2D(K={_kernelWidth}x{_kernelHeight}S={_hStride}x{_vStride}P={_padding})[{_activationFunction?.GetDescription()}]";
+            return $"Conv2D(K={_kernelWidth}x{_kernelHeight}x{_inputChannelsCount}S={_hStride}x{_vStride}P={_padding})[{_activationFunction?.GetDescription()}]";
         }
     }
     /// <summary>
