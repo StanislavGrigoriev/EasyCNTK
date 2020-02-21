@@ -172,27 +172,27 @@
         </member>
         <member name="M:EasyCNTK.Layers.Convolution1D.Build(CNTK.Variable,System.Int32,CNTK.DeviceDescriptor,System.Int32,System.Int32,System.Int32,EasyCNTK.Layers.Padding,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
             <summary>
-            Добавляет одномерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+            Добавляет одномерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не одномерный/двумерный выход, выбрасывается исключение
             </summary>
             <param name="input"></param>
-            <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице/горизонталь изображения)</param>        
+            <param name="kernelWidth">Ширина ядра свертки</param>        
             <param name="device">Устройство для расчетов</param>
             <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
             <param name="outChannelsCount">Количество каналов выходной ячейки (разрядность выходной ячейки после свертки). Количество каналов <paramref name="inputChannelsCount"/> следующего слоя должно равнятся числу выходных каналов текущего слоя. </param>
             <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
-            <param name="hStride">Шаг спещения окна свертки по горизонтали (по столбцам матрицы)</param>        
+            <param name="hStride">Шаг спещения окна свертки по горизонтали</param>        
             <param name="padding">Заполнение при использовании сверток</param>
             <param name="name"></param>
         </member>
         <member name="M:EasyCNTK.Layers.Convolution1D.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,EasyCNTK.Layers.Padding,EasyCNTK.ActivationFunctions.ActivationFunction,System.String)">
             <summary>
-            Добавляет двумерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не двумерный выход, выбрасывается исключение
+            Добавляет одномерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не одномерный/двумерный выход, выбрасывается исключение
             </summary>
-            <param name="kernelWidth">Ширина ядра свертки (столбцы в двумерной матрице)</param>        
+            <param name="kernelWidth">Ширина ядра свертки</param>        
             <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
             <param name="outChannelsCount">Разрядность выходной ячейки после свертки</param>
             <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
-            <param name="hStride">Шаг спещения окна свертки по горизонтали (по столбцам матрицы)</param>        
+            <param name="hStride">Шаг спещения окна свертки по горизонтали</param>        
             <param name="padding">Заполнение при использовании сверток</param>
             <param name="name"></param>
         </member>
@@ -1159,9 +1159,24 @@
         <member name="M:EasyCNTK.Learning.HelperExtensions.MakeSimilarSamplesBySMOTE``1(System.Collections.Generic.IList{``0[]},System.Int32,System.Int32,System.Int32)">
             <summary>
             На основе заданного множества примеров одного класса, создает необходимое количество синтетических примеров этого же класса, используя метод Synthetic Minority Over-sampling Technique (SMOTE)
-            Для корректной генерации входные данные должны быть нормализованы.
+            Для корректной генерации входные данные должны быть нормализованы. Предполагает, что используются непрерывные признаки.
             </summary>
             <typeparam name="T">Тип элементов, поддеживаются все типы, реализующие <seealso cref="T:System.IConvertible"/></typeparam>
+            <param name="source"></param>
+            <param name="similarSampleCount">Количество похожих синтетических примеров, которое требуется создать</param>
+            <param name="nearestNeighborsCount">Количество ближаших соседей, используемых для геренации синтетического примера</param>
+            <param name="seed">Начальное значение для генератора случайных чисел, если 0 - используется генератор по умолчанию</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyCNTK.Learning.HelperExtensions.MakeSimilarSamplesBySMOTE``2(System.Collections.Generic.IList{``0},System.Int32,System.Int32,System.Int32)">
+            <summary>
+            На основе заданного множества примеров одного класса, создает необходимое количество синтетических примеров этого же класса, используя метод Synthetic Minority Over-sampling Technique (SMOTE)
+            Для корректной генерации входные данные должны быть нормализованы. Производит генерацию только на основе тех членов(свойств и полей), которые реализуют <seealso cref="T:System.IConvertible"/>, и соотвественно в сгенерированных примерах записывает значения членов только в них.
+            Предполагает, что все члены хранят непрерывные признаки.
+            </summary>
+            <typeparam name="T">Тип примеров</typeparam>
+            <typeparam name="UElement">Тип элементов(свойства, поля) в которые преобразуются значения членов на этапе генерации, поддеживаются все типы, реализующие <seealso cref="T:System.IConvertible"/>. 
+            Рекомендуется использовать <seealso cref="T:System.Double"/>, если основная часть членов иммеет этот тип, или <seealso cref="T:System.Single"/> для остальных случаев.</typeparam>       
             <param name="source"></param>
             <param name="similarSampleCount">Количество похожих синтетических примеров, которое требуется создать</param>
             <param name="nearestNeighborsCount">Количество ближаших соседей, используемых для геренации синтетического примера</param>

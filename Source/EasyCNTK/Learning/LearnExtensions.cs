@@ -213,13 +213,20 @@ namespace EasyCNTK.Learning
             sw.Start();
             for (int i = 1; i <= epochCount; i++)
             {
+                double averageLoss = 0;
+                double averageEval = 0;
+                int minibatchCount = 0;
+
                 var trainMinibatches = trainDataSelector(i);
                 foreach (var miniBatch in trainMinibatches)
                 {
                     trainer.TrainMinibatch(new Dictionary<Variable, Value>() { { inputVariable, miniBatch.Features }, { outputVariable, miniBatch.Labels } }, false, device);
+                    averageLoss += trainer.PreviousMinibatchLossAverage();
+                    averageEval += trainer.PreviousMinibatchEvaluationAverage();
+                    minibatchCount++;
                 }
-                losses.Add(trainer.PreviousMinibatchLossAverage());
-                evals.Add(trainer.PreviousMinibatchEvaluationAverage());
+                losses.Add(averageLoss/minibatchCount);
+                evals.Add(averageEval/minibatchCount);
 
                 bool needStopTraining = actionPerEpoch?.Invoke(i, losses[i - 1], evals[i - 1]) ?? false;
                 if (needStopTraining)
