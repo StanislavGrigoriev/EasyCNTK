@@ -45,28 +45,19 @@ namespace EasyCNTK
                 yield return list;
             }
         }
-        protected T[] MatrixToVector<T>(T[,] matrix)
-        {
-            var rows = matrix.GetLength(0);
-            var columns = matrix.GetLength(1);
-            var result = new T[rows * columns];
-            for (int i = 0; i < rows; i++)
-            {
-                for (int j = 0; j < columns; j++)
-                {
-                    result[(i + 1) * j] = matrix[i, j];
-                }
-            }
-            return result;
-        }
-        protected int GetRowsCount<T>(T[,] matrix)
-        {
-            return matrix.GetLength(0);
-        }
-        protected int GetColumnsCount<T>(T[,] matrix)
-        {
-            return matrix.GetLength(1);
-        }
+        protected IEnumerable<T> TensorToVector<T>(T[,,] tensor)
+        {            
+            var rows = tensor.GetLength(0);
+            var columns = tensor.GetLength(1);
+            var depth = tensor.GetLength(2);            
+            for (int r = 0; r < rows; r++)
+                for (int c = 0; c < columns; c++)
+                    for (int d = 0; d < columns; d++)
+                    {
+                        yield return tensor[r, c, d];               
+                    }            
+        }     
+
         /// <summary>
         /// Инициализирует конвертер для работы с указанным устройством (CPU, GPU)
         /// </summary>
@@ -137,17 +128,17 @@ namespace EasyCNTK
         /// <param name="labels">Набор меток. Размерность меток должна быть одинаковая.</param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <returns></returns>
-        public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<T[,]> features, IEnumerable<T[]> labels, int minibatchSize) where T : IConvertible
+        public IEnumerable<Minibatch> ConvertDatasetToMinibatch<T>(IEnumerable<T[,,]> features, IEnumerable<T[]> labels, int minibatchSize) where T : IConvertible
         {
             var combined = features.Zip(labels, (f, l) => (f, l));
             foreach (var segment in GetSegments(combined, minibatchSize))
             {
-                var featuresData = segment.SelectMany(p => MatrixToVector(p.f));
+                var featuresData = segment.SelectMany(p => TensorToVector(p.f));
                 var labelsData = segment.SelectMany(p => p.l);
 
                 Minibatch minibatch = new Minibatch();
                 minibatch.Size = segment.Count;
-                minibatch.Features = Value.CreateBatch(new int[] { GetRowsCount(segment[0].f), GetColumnsCount(segment[0].f), 1 }, featuresData, Device);
+                minibatch.Features = Value.CreateBatch(new int[] { segment[0].f.GetLength(0), segment[0].f.GetLength(1), segment[0].f.GetLength(2) }, featuresData, Device);
                 minibatch.Labels = Value.CreateBatch(new int[] { segment[0].l.Length }, labelsData, Device);   
 
                 yield return minibatch;
@@ -196,12 +187,12 @@ namespace EasyCNTK
         /// <param name="data">Набор признаков для каждого примера(sample), где пример - 2D</param>
         /// <param name="minibatchSize">Размер пакета, по которым разбиваются признаки</param>
         /// <returns></returns>
-        public IEnumerable<Value> ConvertDataToValue<T>(IEnumerable<T[,]> data, int minibatchSize) where T : IConvertible
+        public IEnumerable<Value> ConvertDataToValue<T>(IEnumerable<T[,,]> data, int minibatchSize) where T : IConvertible
         {
             foreach (var segment in GetSegments(data, minibatchSize))
             {
-                var features = segment.SelectMany(p => MatrixToVector(p));
-                var value = Value.CreateBatch(new int[] { GetRowsCount(segment[0]), GetColumnsCount(segment[0]), 1 }, features, Device);
+                var features = segment.SelectMany(p => TensorToVector(p));
+                var value = Value.CreateBatch(new int[] { segment[0].GetLength(0), segment[0].GetLength(1), segment[0].GetLength(2) }, features, Device);
                 yield return value;
             }
         }
@@ -277,13 +268,13 @@ namespace EasyCNTK
         /// <param name="labels">Набор меток для каждого выхода модели, размерность для каждого выхода может быть своя. </param>
         /// <param name="minibatchSize">Размер минипакета</param>
         /// <returns></returns>
-        public IEnumerable<MinibatchMultiOutput> ConvertDatasetToMinibatchMultiOutput<T>(IEnumerable<T[,]> features, IEnumerable<T[][]> labels, int minibatchSize) where T:IConvertible
+        public IEnumerable<MinibatchMultiOutput> ConvertDatasetToMinibatchMultiOutput<T>(IEnumerable<T[,,]> features, IEnumerable<T[][]> labels, int minibatchSize) where T:IConvertible
         {            
             int outputCount = labels.FirstOrDefault()?.Length ?? 0;
             var combined = features.Zip(labels, (f, l) => (f, l));
             foreach (var segment in GetSegments(combined, minibatchSize))
             {
-                var featuresData = segment.SelectMany(p => MatrixToVector(p.f));
+                var featuresData = segment.SelectMany(p => TensorToVector(p.f));
                 var labelsData = new T[outputCount][];
                 for (int i = 0; i < outputCount; i++)
                 {
@@ -292,7 +283,7 @@ namespace EasyCNTK
 
                 MinibatchMultiOutput minibatch = new MinibatchMultiOutput();
                 minibatch.Size = segment.Count;
-                minibatch.Features = Value.CreateBatch(new int[] { GetRowsCount(segment[0].f), GetColumnsCount(segment[0].f), 1 }, featuresData, Device);
+                minibatch.Features = Value.CreateBatch(new int[] { segment[0].f.GetLength(0), segment[0].f.GetLength(1), segment[0].f.GetLength(2) }, featuresData, Device);
                 minibatch.Labels = labelsData
                     .Select(label => Value.CreateBatch(new int[] { label.Length / segment.Count }, label, Device))
                     .ToArray();

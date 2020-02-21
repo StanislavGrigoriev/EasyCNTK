@@ -452,7 +452,7 @@ namespace EasyCNTK.Learning
         /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
-            IList<T[,]> features,
+            IList<T[,,]> features,
             IList<T[]> labels,
             int minibatchSize,
             Loss lossFunction,
@@ -576,7 +576,7 @@ namespace EasyCNTK.Learning
         /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult Fit<T>(this Sequential<T> source,
-            IEnumerable<T[,]> features,
+            IEnumerable<T[,,]> features,
             IEnumerable<T[]> labels,
             int minibatchSize,
             Loss lossFunction,
@@ -788,7 +788,7 @@ namespace EasyCNTK.Learning
         /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
-            IList<T[,]> features,
+            IList<T[,,]> features,
             IList<T[][]> labels,
             int minibatchSize,
             Loss[] lossFunctions,
@@ -915,7 +915,7 @@ namespace EasyCNTK.Learning
         /// <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
         /// <returns></returns>
         public static FitResult[] Fit<T>(this SequentialMultiOutput<T> source,
-            IEnumerable<T[,]> features,
+            IEnumerable<T[,,]> features,
             IEnumerable<T[][]> labels,
             int minibatchSize,
             Loss[] lossFunctions,
