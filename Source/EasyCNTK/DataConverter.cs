@@ -52,7 +52,7 @@ namespace EasyCNTK
             var depth = tensor.GetLength(2);            
             for (int r = 0; r < rows; r++)
                 for (int c = 0; c < columns; c++)
-                    for (int d = 0; d < columns; d++)
+                    for (int d = 0; d < depth; d++)
                     {
                         yield return tensor[r, c, d];               
                     }            
