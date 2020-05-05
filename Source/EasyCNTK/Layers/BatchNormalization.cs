@@ -20,9 +20,9 @@ namespace EasyCNTK.Layers
         {
             var scale = new Parameter(input.Output.Shape, input.Output.DataType, 1, device);
             var bias = new Parameter(input.Output.Shape, input.Output.DataType, 0, device);
-            var runningMean = new Constant(input.Output.Shape, input.Output.DataType, 0, device);
-            var runningInvStd = new Constant(input.Output.Shape, input.Output.DataType, 0, device);
-            var runningCount = new Constant(new int[] { 1 }, input.Output.DataType, 0, device);
+            var runningMean = new Parameter(input.Output.Shape, input.Output.DataType, 0, device);
+            var runningInvStd = new Parameter(input.Output.Shape, input.Output.DataType, 0, device);
+            var runningCount = new Parameter(new int[] { 1 }, input.Output.DataType, 0, device);
             return CNTKLib.BatchNormalization(input.Output, scale, bias, runningMean, runningInvStd, runningCount, false);
         }
         /// <summary>
