@@ -146,6 +146,24 @@ namespace EasyCNTK
                 {
                     Model = CNTKLib.Plus(Model, input);
                 }
+                else if(input.Output.Shape.Rank == 3 && Model.Output.Shape.Rank == 3)
+                {
+                    int inputWidth = input.Output.Shape[0];
+                    int inputHeight = input.Output.Shape[1];
+                    int inputChannels = input.Output.Shape[2];
+
+                    int outputWidth = Model.Output.Shape[0];
+                    int outputHeigth = Model.Output.Shape[1];
+                    int outputChannels = Model.Output.Shape[2];
+
+                    int kernelWidth = inputWidth - outputWidth + 1;
+                    int kernelHeight = inputHeight - outputHeigth + 1;
+                                        
+                    var convMap = new Parameter(new int[] { kernelWidth, kernelHeight, inputChannels, outputChannels }, input.Output.DataType, CNTKLib.GlorotUniformInitializer(), _device);
+                    var convolution = CNTKLib.Convolution(convMap, input, new int[] { 1, 1, inputChannels }, new bool[] { true }, new bool[] { false, false, false }/*padding=valid*/);
+
+                    Model = CNTKLib.Plus(convolution, Model);
+                }
                 else if (input.Output.Shape.Rank != 1 && Model.Output.Shape.Rank == 1) // [3x4x2] => [5]
                 {
                     int targetDim = Model.Output.Shape[0];
