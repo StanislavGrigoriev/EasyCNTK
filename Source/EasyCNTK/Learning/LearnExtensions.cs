@@ -240,7 +240,7 @@ namespace EasyCNTK.Learning
                     var proposaledLearningRate = ruleUpdateLearningRate(i, learningRate);
                     if (proposaledLearningRate != learningRate)
                     {
-                        learner.SetLearningRateSchedule(new TrainingParameterScheduleDouble(learningRate));
+                        learner.SetLearningRateSchedule(new TrainingParameterScheduleDouble(proposaledLearningRate));
                         learningRate = proposaledLearningRate;
                     }
                 }
