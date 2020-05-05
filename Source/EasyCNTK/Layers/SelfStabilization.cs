@@ -14,24 +14,15 @@ namespace EasyCNTK.Layers
     /// <summary>
     /// Реализует слой самостаблизации для выбора оптимальной скорости обучения. Источник: https://github.com/Microsoft/CNTK/blob/release/latest/Examples/TrainingCSharp/Common/LSTMSequenceClassifier.cs
     /// </summary>
-    public sealed class SelfStabilization : Layer
+    public sealed class SelfStabilization<T> : Layer
     {
         private string _name;
         private static Function selfStabilize(Function input, DeviceDescriptor device, string name)
         {
-
-            bool isFloatType = input.Output.DataType == DataType.Float;
-            Constant f, fInv;
-            if (isFloatType)
-            {
-                f = Constant.Scalar(4.0f, device);
-                fInv = Constant.Scalar(f.DataType, 1.0 / 4.0f);
-            }
-            else
-            {
-                f = Constant.Scalar(4.0, device);
-                fInv = Constant.Scalar(f.DataType, 1.0 / 4.0);
-            }
+            DataType dataType = typeof(T) == typeof(float) ? DataType.Float : DataType.Double;
+           
+            Constant f = Constant.Scalar(dataType, 4.0, device);
+            Constant fInv = Constant.Scalar(dataType, 1.0 / 4.0);
 
             var beta = CNTKLib.ElementTimes(
                 fInv,
