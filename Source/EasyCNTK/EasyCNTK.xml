@@ -45,7 +45,7 @@
             <param name="inputDim">Размерность признаков (разрядность)</param> 
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatch``1(System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[]},System.Int32)">
+        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatch``1(System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},System.Collections.Generic.IEnumerable{``0[]},System.Int32)">
             <summary>
             Преобразует датасет в наборы обучающих примеров в 2D для использования в CNTK. 
             </summary>
@@ -73,7 +73,7 @@
             <param name="minibatchSize">Размер пакета, по которым разбиваются признаки</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.DataConverter.ConvertDataToValue``1(System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Int32)">
+        <member name="M:EasyCNTK.DataConverter.ConvertDataToValue``1(System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},System.Int32)">
             <summary>
             Преобразует нативный набор признаков (2D) в набор признаков в формате CNTK.
             </summary>
@@ -102,7 +102,7 @@
             <param name="minibatchSize">Размер минипакета</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatchMultiOutput``1(System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},System.Int32)">
+        <member name="M:EasyCNTK.DataConverter.ConvertDatasetToMinibatchMultiOutput``1(System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},System.Int32)">
             <summary>
             Преобразует 2D датасет в наборы обучающих примеров для использования в CNTK. Используется для обучения моделей с несколькими выходами.
             </summary>
@@ -489,12 +489,12 @@
             <param name="activationFunction">Функция активации, null если не требуется</param>
             <param name="name"></param>
         </member>
-        <member name="T:EasyCNTK.Layers.SelfStabilization">
+        <member name="T:EasyCNTK.Layers.SelfStabilization`1">
             <summary>
             Реализует слой самостаблизации для выбора оптимальной скорости обучения. Источник: https://github.com/Microsoft/CNTK/blob/release/latest/Examples/TrainingCSharp/Common/LSTMSequenceClassifier.cs
             </summary>
         </member>
-        <member name="M:EasyCNTK.Layers.SelfStabilization.Build(CNTK.Function,CNTK.DeviceDescriptor,System.String)">
+        <member name="M:EasyCNTK.Layers.SelfStabilization`1.Build(CNTK.Function,CNTK.DeviceDescriptor,System.String)">
             <summary>
             Создает слой самостабилизации для выбора оптимальной скорости обучения.
             </summary>
@@ -503,7 +503,7 @@
             <param name="name"></param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Layers.SelfStabilization.#ctor(System.String)">
+        <member name="M:EasyCNTK.Layers.SelfStabilization`1.#ctor(System.String)">
             <summary>
             Создает слой самостабилизации для выбора оптимальной скорости обучения.
             </summary>
@@ -605,7 +605,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,System.Collections.Generic.IEnumerable{``0[0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
             <summary>
             Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
             </summary>
@@ -645,7 +645,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,``0[0:,0:],CNTK.DeviceDescriptor,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(CNTK.Function,``0[0:,0:,0:],CNTK.DeviceDescriptor,System.String)">
             <summary>
             Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
             </summary>
@@ -687,7 +687,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,System.Collections.Generic.IEnumerable{``0[0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
             <summary>
             Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
             </summary>
@@ -727,7 +727,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,``0[0:,0:],CNTK.DeviceDescriptor,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.PredictMultiOutput``1(CNTK.Function,``0[0:,0:,0:],CNTK.DeviceDescriptor,System.String)">
             <summary>
             Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
             </summary>
@@ -776,7 +776,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},System.Collections.Generic.IEnumerable{``0[]},CNTK.DeviceDescriptor,System.Int32,System.String)">
             <summary>
             Вычисляет выход модели для каждого из тестовых примеров.
             </summary>
@@ -825,7 +825,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Evaluate``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},CNTK.DeviceDescriptor,System.Int32,System.String)">
             <summary>
             Вычисляет выход модели для каждого из тестовых примеров.
             </summary>
@@ -879,7 +879,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
             <summary>
             Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
             </summary>
@@ -909,7 +909,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},``0[0:,0:],CNTK.DeviceDescriptor,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.Sequential{``0},``0[0:,0:,0:],CNTK.DeviceDescriptor,System.String)">
             <summary>
             Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
             </summary>
@@ -960,7 +960,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},CNTK.DeviceDescriptor,System.Int32,System.String)">
             <summary>
             Вычисляет выходные значения модели для каждого из входных примеров (пример - 2D). (Inference).
             </summary>
@@ -990,7 +990,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},``0[0:,0:],CNTK.DeviceDescriptor,System.String)">
+        <member name="M:EasyCNTK.Learning.EvaluateExtensions.Predict``1(EasyCNTK.SequentialMultiOutput{``0},``0[0:,0:,0:],CNTK.DeviceDescriptor,System.String)">
             <summary>
             Вычисляет выходные значения модели одного примера (пример - 2D). (Inference).
             </summary>
@@ -1345,7 +1345,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IList{``0[0:,0:]},System.Collections.Generic.IList{``0[]},System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IList{``0[0:,0:,0:]},System.Collections.Generic.IList{``0[]},System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
             <summary>
             Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
             </summary>
@@ -1409,7 +1409,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[]},System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.Sequential{``0},System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},System.Collections.Generic.IEnumerable{``0[]},System.Int32,EasyCNTK.LossFunctions.Loss,EasyCNTK.LossFunctions.Loss,EasyCNTK.Learning.Optimizers.Optimizer,System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double,System.Double},System.Func{System.Int32,System.Double,System.Double,System.Boolean},System.String)">
             <summary>
             Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
             </summary>
@@ -1511,7 +1511,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IList{``0[0:,0:]},System.Collections.Generic.IList{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IList{``0[0:,0:,0:]},System.Collections.Generic.IList{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,System.Boolean,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean},System.String)">
             <summary>
             Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
             </summary>
@@ -1575,7 +1575,7 @@
             <param name="inputName">Имя входного слоя. Имя должно быть уникальным для всей сети. Входов может быть несколько, этот параметр указывает на какой из них подавать данные.</param>
             <returns></returns>
         </member>
-        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean})">
+        <member name="M:EasyCNTK.Learning.LearnExtensions.Fit``1(EasyCNTK.SequentialMultiOutput{``0},System.Collections.Generic.IEnumerable{``0[0:,0:,0:]},System.Collections.Generic.IEnumerable{``0[][]},System.Int32,EasyCNTK.LossFunctions.Loss[],EasyCNTK.LossFunctions.Loss[],EasyCNTK.Learning.Optimizers.Optimizer[],System.Int32,CNTK.DeviceDescriptor,System.Func{System.Int32,System.Double[],System.Double[]},System.Func{System.Int32,System.Double[],System.Double[],System.Boolean})">
             <summary>
             Обучает модель с двумерным входом. Не применим для обучения реккуретных сетей.
             </summary>

@@ -19,6 +19,7 @@ namespace EasyCNTK.Layers
     {
         private int _outputDim;
         private ActivationFunction _activationFunction;
+        private WeightsInitializer _weightsInitializer;
         private string _name;
 
         /// <summary>
@@ -30,14 +31,12 @@ namespace EasyCNTK.Layers
         /// <param name="device">Устройство на котором производится расчет</param>
         /// <param name="name">Имя слоя</param>
         /// <returns></returns>
-        private static Function createFullyConnectedLinearLayer(Variable input, int outputDim, ActivationFunction activationFunction, DeviceDescriptor device, string name)
+        private static Function createFullyConnectedLinearLayer(Variable input, int outputDim, ActivationFunction activationFunction,  DeviceDescriptor device, WeightsInitializer initializer, string name)
         {
             var dataType = input.DataType;            
             var inputDim = input.Shape[0];
-            var weight   = new Parameter(new int[] { outputDim, inputDim }, dataType, CNTKLib.GlorotUniformInitializer(
-                CNTKLib.DefaultParamInitScale,
-                    CNTKLib.SentinelValueForInferParamInitRank,
-                    CNTKLib.SentinelValueForInferParamInitRank, 1), device);
+            CNTKDictionary weightsInit = initializer?.Create() ?? CNTKLib.GlorotUniformInitializer();
+            var weight   = new Parameter(new int[] { outputDim, inputDim }, dataType, weightsInit, device);
             var bias                    = new Parameter(new int[] { outputDim }, dataType, 0, device);
             var fullyConnected          = CNTKLib.Times(weight, input) + bias;
             var activatedFullyConnected = activationFunction?.ApplyActivationFunction(fullyConnected, device) ?? fullyConnected;
@@ -49,27 +48,30 @@ namespace EasyCNTK.Layers
         /// <param name="input">Входная переменная(слой) заданной разрядности</param>
         /// <param name="outputDim">Выходная разрядность(кол-во нейронов)</param>
         /// <param name="activationFunction">Функция активации</param>
+        /// <param name="initializer">Инициализатор весов, если null - то GlorotUniformInitializer</param>
         /// <param name="device">Устройство на котором производится расчет</param>
         /// <param name="name">Имя слоя</param>
         /// <returns></returns>
-        public static Function Build(Function input, int outputDim, ActivationFunction activationFunction, DeviceDescriptor device, string name = "Dense")
+        public static Function Build(Function input, int outputDim, ActivationFunction activationFunction, DeviceDescriptor device, WeightsInitializer initializer = null, string name = "Dense")
         {
-            return createFullyConnectedLinearLayer(input, outputDim, activationFunction, device, name);
+            return createFullyConnectedLinearLayer(input, outputDim, activationFunction, device, initializer, name);
         }        
         public override Function Create(Function input, DeviceDescriptor device)
         {
-            return createFullyConnectedLinearLayer(input, _outputDim, _activationFunction, device, _name);
+            return createFullyConnectedLinearLayer(input, _outputDim, _activationFunction,  device, _weightsInitializer, _name);
         }
         /// <summary>
         /// Создает полносвязный слой с заданной функцией активации
         /// </summary>
         /// <param name="outputDimension">Выходная разрядность(кол-во нейронов)</param>
         /// <param name="activationFunction">Функция активации, null если не требуется</param>
+        /// <param name="initializer">Инициализатор весов, если null - то GlorotUniformInitializer</param>
         /// <param name="name">Имя слоя</param>
-        public Dense(int outputDimension, ActivationFunction activationFunction, string name = "Dense")
+        public Dense(int outputDimension, ActivationFunction activationFunction, WeightsInitializer initializer = null, string name = "Dense")
         {
             _outputDim = outputDimension;
             _activationFunction = activationFunction;
+            _weightsInitializer = initializer;
             _name = name;
         }  
 

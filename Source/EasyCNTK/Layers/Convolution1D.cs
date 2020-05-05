@@ -24,6 +24,7 @@ namespace EasyCNTK.Layers
         private int _hStride;       
         private Padding _padding;
         private ActivationFunction _activationFunction;
+        private WeightsInitializer _weightsInitializer;
         private string _name;
         /// <summary>
         /// Добавляет одномерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не одномерный/двумерный выход, выбрасывается исключение
@@ -31,13 +32,13 @@ namespace EasyCNTK.Layers
         /// <param name="input"></param>
         /// <param name="kernelWidth">Ширина ядра свертки</param>        
         /// <param name="device">Устройство для расчетов</param>
-        /// <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
         /// <param name="outChannelsCount">Количество каналов выходной ячейки (разрядность выходной ячейки после свертки). Количество каналов <paramref name="inputChannelsCount"/> следующего слоя должно равнятся числу выходных каналов текущего слоя. </param>
         /// <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
         /// <param name="hStride">Шаг спещения окна свертки по горизонтали</param>        
         /// <param name="padding">Заполнение при использовании сверток</param>
+        /// <param name="initializer">Инициализатор весов, если null - то GlorotUniformInitializer</param>
         /// <param name="name"></param>
-        public static Function Build(Variable input, int kernelWidth, DeviceDescriptor device, int inputChannelsCount = 1, int outChannelsCount = 1, int hStride = 1, Padding padding = Padding.Valid, ActivationFunction activationFunction = null, string name = "Conv1D")
+        public static Function Build(Variable input, int kernelWidth, int outChannelsCount, DeviceDescriptor device, int hStride = 1, Padding padding = Padding.Valid, WeightsInitializer initializer = null, ActivationFunction activationFunction = null, string name = "Conv1D")
         {
             bool[] paddingVector = null;
             if (padding == Padding.Valid)
@@ -48,8 +49,10 @@ namespace EasyCNTK.Layers
             {
                 paddingVector = new bool[] { true, false };
             }
+            int inputChannelsCount = input.Shape.Dimensions[input.Shape.Dimensions.Count - 1];
+            CNTKDictionary weightsInit = initializer?.Create() ?? CNTKLib.GlorotUniformInitializer();
 
-            var convMap = new Parameter(new int[] { kernelWidth, inputChannelsCount, outChannelsCount }, input.DataType, CNTKLib.GlorotUniformInitializer(), device);
+            var convMap = new Parameter(new int[] { kernelWidth, inputChannelsCount, outChannelsCount }, input.DataType, weightsInit, device);
             var convolution = CNTKLib.Convolution(convMap, input, new int[] { hStride, inputChannelsCount }, new bool[] { true }, paddingVector);
             var activatedConvolution = activationFunction?.ApplyActivationFunction(convolution, device) ?? convolution;
 
@@ -58,26 +61,27 @@ namespace EasyCNTK.Layers
 
         public override Function Create(Function input, DeviceDescriptor device)
         {
-            return Build(input, _kernelWidth, device, _inputChannelsCount, _outChannelsCount, _hStride, _padding, _activationFunction, _name);
+            _inputChannelsCount = input.Output.Shape.Dimensions[input.Output.Shape.Dimensions.Count - 1];
+            return Build(input, _kernelWidth, _outChannelsCount, device, _hStride, _padding, _weightsInitializer, _activationFunction, _name);
         }
         /// <summary>
         /// Добавляет одномерный сверточный слой с разным числом каналов. Если предыдущий слой имеет не одномерный/двумерный выход, выбрасывается исключение
         /// </summary>
-        /// <param name="kernelWidth">Ширина ядра свертки</param>        
-        /// <param name="inputChannelsCount">Количество каналов входного изображения, для черно-белого изображения равно 1, для цветного (RGB) равно 3</param>
+        /// <param name="kernelWidth">Ширина ядра свертки</param>  
         /// <param name="outChannelsCount">Разрядность выходной ячейки после свертки</param>
         /// <param name="activationFunction">Функция активации для выходного слоя. Если не требуется - передать null</param>
         /// <param name="hStride">Шаг спещения окна свертки по горизонтали</param>        
         /// <param name="padding">Заполнение при использовании сверток</param>
+        /// <param name="initializer">Инициализатор весов, если null - то GlorotUniformInitializer</param>
         /// <param name="name"></param>
-        public Convolution1D(int kernelWidth, int inputChannelsCount = 1, int outChannelsCount = 1, int hStride = 1, Padding padding = Padding.Valid, ActivationFunction activationFunction = null, string name = "Conv2D")
+        public Convolution1D(int kernelWidth, int outChannelsCount, int hStride = 1, Padding padding = Padding.Valid, WeightsInitializer initializer = null, ActivationFunction activationFunction = null, string name = "Conv2D")
         {
-            _kernelWidth = kernelWidth;
-            _inputChannelsCount = inputChannelsCount;
+            _kernelWidth = kernelWidth;            
             _outChannelsCount = outChannelsCount;
             _hStride = hStride;
             _padding = padding;
             _activationFunction = activationFunction;
+            _weightsInitializer = initializer;
             _name = name;
         }
         public override string GetDescription()
