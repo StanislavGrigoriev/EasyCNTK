@@ -15,16 +15,31 @@ namespace EasyCNTK.Layers
     /// Реализует слой батч-нормализации
     /// </summary>
     public sealed class BatchNormalization : Layer
-    { 
-        private static Function createBatchNorm(Function input, DeviceDescriptor device)
+    {
+        private string _name;
+        private bool _spatial;         
+        
+        private Function createBatchNorm(Function input, DeviceDescriptor device)
         {
             var scale = new Parameter(input.Output.Shape, input.Output.DataType, 1, device);
             var bias = new Parameter(input.Output.Shape, input.Output.DataType, 0, device);
-            var runningMean = new Parameter(input.Output.Shape, input.Output.DataType, 0, device);
-            var runningInvStd = new Parameter(input.Output.Shape, input.Output.DataType, 0, device);
-            var runningCount = new Parameter(new int[] { 1 }, input.Output.DataType, 0, device);
-            return CNTKLib.BatchNormalization(input.Output, scale, bias, runningMean, runningInvStd, runningCount, false);
+            var runningMean = new Constant(input.Output.Shape, input.Output.DataType, 0, device);
+            var runningInvStd = new Constant(input.Output.Shape, input.Output.DataType, 0, device);
+            var runningCount = Constant.Scalar(input.Output.DataType, 0, device);
+            var bn = CNTKLib.BatchNormalization(input.Output, scale, bias, runningMean, runningInvStd, runningCount, _spatial);
+            return CNTKLib.Alias(bn, _name);
         }
+        /// <summary>
+        /// Создает слой пакетной нормализации
+        /// </summary>
+        /// <param name="spatial">Указывает, следует ли вычислять среднее/дисперсию для каждого признака независимо, или в случае сверточных сетей - для каждого фильтра(рекомендуется)</param>
+        /// <param name="name"></param>
+        public BatchNormalization(bool spatial = false, string name = "BN")
+        {
+            _spatial = spatial;
+            _name = name;
+        }
+
         /// <summary>
         /// Создает слой батч-нормализации
         /// </summary>
@@ -33,7 +48,7 @@ namespace EasyCNTK.Layers
         /// <returns></returns>
         public static Function Build(Function input, DeviceDescriptor device)
         {
-            return createBatchNorm(input, device);
+            return new BatchNormalization().createBatchNorm(input, device);
         }
         public override Function Create(Function input, DeviceDescriptor device)
         {
@@ -42,7 +57,7 @@ namespace EasyCNTK.Layers
 
         public override string GetDescription()
         {
-            return "BN";
+            return $"BN(S={_spatial})";
         }
     }
 }
